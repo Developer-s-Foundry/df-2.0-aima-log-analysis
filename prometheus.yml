@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'log_analysis_service'
+    static_configs:
+      - targets: ['log_analysis_service:8000']
+    metrics_path: '/metrics'
