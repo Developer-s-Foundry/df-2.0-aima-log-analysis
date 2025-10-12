@@ -1,15 +1,19 @@
+import os
 import asyncio
 import json
 from datetime import datetime
 
 import aio_pika
+import dotenv
+
+dotenv.load_dotenv()  # Load environment variables from .env file
 
 
 async def send_test_log():
     """Send a test log to RabbitMQ."""
     # Update with your credentials
     connection = await aio_pika.connect_robust(
-        "amqp://guest:guest@localhost:5672/"
+        f"amqp://{os.getenv('RABBITMQ_USER')}:{os.getenv('RABBITMQ_PASSWORD')}@localhost:{os.getenv('RABBITMQ_PORT')}/"
     )
     
     async with connection:
