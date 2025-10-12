@@ -156,7 +156,14 @@ class LogConsumer:
             message_data = data["data"]
 
             # Check required message fields
-            required_fields = ["type", "receiver", "service_name", "log_level", "message", "timestamp"]
+            required_fields = [
+                "type",
+                "receiver",
+                "service_name",
+                "log_level",
+                "message",
+                "timestamp"
+                ]
 
             if not all(field in message_data for field in required_fields):
                 return False

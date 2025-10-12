@@ -112,7 +112,11 @@ class RabbitMQConnection:
     @property
     def is_connected(self) -> bool:
         """Check if connected to RabbitMQ."""
-        return self._is_connected and self._connection is not None and not self._connection.is_closed
+        return (
+            self._is_connected
+            and self._connection is not None
+            and not self._connection.is_closed
+        )
 
     async def declare_queue(
         self, queue_name: str, durable: bool = True, auto_delete: bool = False

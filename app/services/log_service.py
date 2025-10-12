@@ -143,7 +143,7 @@ class LogService:
         """Get unprocessed log entries for batch processing."""
         query = (
             select(LogEntry)
-            .where(LogEntry.processed == False)
+            .where(LogEntry.processed.is_(False))
             .order_by(LogEntry.timestamp.asc())
             .limit(limit)
         )

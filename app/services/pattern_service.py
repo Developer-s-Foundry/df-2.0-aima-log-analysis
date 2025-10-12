@@ -77,7 +77,7 @@ class PatternService:
         self, service_name: Optional[str] = None, limit: int = 100
     ) -> List[Pattern]:
         """Get active patterns, optionally filtered by service."""
-        query = select(Pattern).where(Pattern.is_active == True)
+        query = select(Pattern).where(Pattern.is_active.is_(True))
 
         if service_name:
             query = query.where(Pattern.service_name == service_name)

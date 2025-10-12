@@ -67,7 +67,6 @@ def init_db() -> None:
             environment=settings.environment,
         )
 
-
     # Create session factory
     async_session_factory = async_sessionmaker(
         engine,

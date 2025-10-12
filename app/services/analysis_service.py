@@ -5,7 +5,7 @@ from typing import List, Optional
 from uuid import UUID
 import json
 
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.analysis_result import AnalysisResult
