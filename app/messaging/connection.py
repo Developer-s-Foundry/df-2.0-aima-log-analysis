@@ -1,10 +1,9 @@
 """RabbitMQ connection management with auto-reconnect."""
 
-import asyncio
 from typing import Optional
 
 import aio_pika
-from aio_pika import Connection, Channel
+from aio_pika import Channel
 from aio_pika.abc import AbstractRobustConnection
 from tenacity import (
     retry,

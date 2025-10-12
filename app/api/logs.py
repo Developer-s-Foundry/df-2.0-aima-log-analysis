@@ -12,7 +12,6 @@ from app.db.session import get_db
 from app.schemas.log_schemas import (
     LogEntryResponse,
     LogListResponse,
-    AnalysisSummaryResponse,
     APIResponse,
 )
 from app.services.log_service import LogService

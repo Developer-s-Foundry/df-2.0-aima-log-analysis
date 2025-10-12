@@ -136,6 +136,7 @@ class MessagePublisher:
             queue = await self.connection.declare_queue(
                 self.settings.recommendation_queue, durable=True
             )
+            print("queue", queue)
 
             await self.connection.channel.default_exchange.publish(
                 aio_pika.Message(
@@ -214,6 +215,8 @@ class MessagePublisher:
             queue = await self.connection.declare_queue(
                 self.settings.alerts_queue, durable=True
             )
+
+            print("queue", queue)
 
             await self.connection.channel.default_exchange.publish(
                 aio_pika.Message(

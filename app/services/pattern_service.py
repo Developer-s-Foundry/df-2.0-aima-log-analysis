@@ -1,7 +1,6 @@
 """Service for pattern operations."""
 
 from typing import List, Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

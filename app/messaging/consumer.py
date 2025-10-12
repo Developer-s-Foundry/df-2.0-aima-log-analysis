@@ -4,7 +4,6 @@ import asyncio
 import json
 from typing import Callable, Optional
 
-from aio_pika import IncomingMessage
 from aio_pika.abc import AbstractIncomingMessage
 
 from app.core.config import get_settings
