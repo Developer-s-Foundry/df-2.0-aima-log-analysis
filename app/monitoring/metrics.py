@@ -43,6 +43,13 @@ class MetricsCollector:
             "patterns_detected_total", "Total number of patterns detected"
         )
 
+        # Alert metrics
+        self.alerts_triggered_total = Counter(
+            "alerts_triggered_total",
+            "Total number of alerts triggered",
+            ["service_name", "log_level"],
+        )
+
         # RabbitMQ metrics
         self.messages_consumed_total = Counter(
             "messages_consumed_total", "Total messages consumed from RabbitMQ"
@@ -99,6 +106,10 @@ class MetricsCollector:
         """Record pattern detection."""
         self.patterns_detected_total.inc()
 
+    def record_alert_triggered(self, service_name: str, log_level: str) -> None:
+        """Record alert triggered."""
+        self.alerts_triggered_total.labels(service_name=service_name, log_level=log_level).inc()
+
     def record_message_consumed(self) -> None:
         """Record RabbitMQ message consumption."""
         self.messages_consumed_total.inc()
@@ -124,6 +135,18 @@ class MetricsCollector:
     def set_unprocessed_logs(self, count: int) -> None:
         """Set number of unprocessed logs."""
         self.unprocessed_logs.set(count)
+
+    def get_logs_processed_count(self) -> int:
+        """Get logs processed count."""
+        return int(self.logs_processed_total._value.get())
+
+    def get_logs_failed_count(self) -> int:
+        """Get logs failed count."""
+        return int(self.logs_failed_total._value.get())
+
+    def get_alerts_triggered_count(self) -> int:
+        """Get alerts triggered count."""
+        return int(self.alerts_triggered_total._value.get())
 
 
 # Global metrics collector instance

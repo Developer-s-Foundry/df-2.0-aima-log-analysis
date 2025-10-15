@@ -14,7 +14,7 @@ from app.core.logging import setup_logging, get_logger
 from app.db.session import init_db, close_db
 from app.messaging.connection import get_rabbitmq_connection, close_rabbitmq_connection
 from app.messaging.consumer import LogConsumer
-from app.processing.ingestion import LogIngestionEngine
+from app.services.ingestion_service import IngestionService
 from app.monitoring.metrics import get_metrics_collector, metrics_endpoint
 
 # Setup logging
@@ -78,23 +78,47 @@ async def start_consumer(rabbitmq):
     consumer = LogConsumer(rabbitmq)
 
     async def message_handler(message: dict) -> None:
-        """Handle incoming log message."""
+        """Handle incoming log message with AI fallback."""
         metrics = get_metrics_collector()
         metrics.record_message_consumed()
 
         async with async_session_factory() as session:
             try:
-                engine = LogIngestionEngine(session)
-                log_entry = await engine.process_message(message)
+                # Use IngestionService with AI capabilities and fallback
+                ingestion_service = IngestionService(session)
+                
+                # Process message with AI (will fallback to basic analysis if AI fails)
+                log_entry = await ingestion_service.process_message(message, use_ai=True)
 
-                metrics.record_log_ingested(
-                    log_entry.service_name, log_entry.log_level
+                logger.info(
+                    "message_processed_successfully",
+                    log_id=str(log_entry.id),
+                    service=log_entry.service_name,
+                    level=log_entry.log_level,
                 )
-                metrics.record_log_processed()
 
             except Exception as e:
                 logger.error("message_handler_error", error=str(e), exc_info=True)
                 metrics.record_log_failed()
+                
+                # Try fallback processing without AI
+                try:
+                    logger.info("attempting_fallback_processing")
+                    ingestion_service = IngestionService(session)
+                    log_entry = await ingestion_service.process_message(message, use_ai=False)
+                    
+                    logger.info(
+                        "fallback_processing_successful",
+                        log_id=str(log_entry.id),
+                        service=log_entry.service_name,
+                    )
+                    
+                except Exception as fallback_error:
+                    logger.error(
+                        "fallback_processing_failed", 
+                        error=str(fallback_error), 
+                        exc_info=True
+                    )
 
     await consumer.start_consuming(message_handler)
 

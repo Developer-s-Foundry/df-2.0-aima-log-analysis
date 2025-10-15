@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # Database Configuration
     database_url: str = Field(
-        default="postgresql+asyncpg://postgres:password@localhost:5432/log_analysis_db",
+        default="postgresql+asyncpg://postgres:password@postgres:5432/log_analysis_db",
         description="Database connection URL",
     )
     database_pool_size: int = Field(default=20, ge=1, description="Database pool size")
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     )
 
     # RabbitMQ Configuration
-    rabbitmq_host: str = Field(default="localhost", description="RabbitMQ host")
+    rabbitmq_host: str = Field(default="rabbitmq", description="RabbitMQ host")
     rabbitmq_port: int = Field(default=5672, ge=1, le=65535, description="RabbitMQ port")
     rabbitmq_user: str = Field(default="guest", description="RabbitMQ username")
     rabbitmq_password: str = Field(default="guest", description="RabbitMQ password")
@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     api_gateway_public_key: Optional[str] = Field(
         default=None, description="API Gateway public key for JWT verification"
     )
+    
+    # External Auth Service Configuration
+    auth_service_url: Optional[str] = Field(
+        default=None, description="External auth service URL for token validation"
+    )
 
     # Processing Configuration
     batch_size: int = Field(default=100, ge=1, description="Batch processing size")
@@ -94,6 +99,23 @@ class Settings(BaseSettings):
     )
     min_pattern_frequency: int = Field(
         default=5, ge=1, description="Minimum pattern frequency for detection"
+    )
+
+    # AI Configuration
+    ai_analysis_enabled: bool = Field(
+        default=True, description="Enable AI-powered log analysis (if disabled, uses basic analysis)"
+    )
+    ai_timeout_seconds: int = Field(
+        default=10, ge=1, description="AI analysis timeout in seconds"
+    )
+    ai_retry_attempts: int = Field(
+        default=2, ge=0, description="Number of AI analysis retry attempts"
+    )
+    ai_confidence_threshold: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Minimum AI confidence threshold"
+    )
+    enable_real_time_processing: bool = Field(
+        default=True, description="Enable real-time log processing"
     )
 
     # Metrics & Monitoring
