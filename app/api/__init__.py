@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api import logs, health
+from app.api import health, logs
 
 api_router = APIRouter()
 

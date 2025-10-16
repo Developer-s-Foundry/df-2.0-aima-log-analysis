@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
 from app.models.log_entry import LogEntry
 from app.schemas.log_schemas import LogEntryCreate
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -7,9 +7,9 @@ from aio_pika import Channel
 from aio_pika.abc import AbstractRobustConnection
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
 
 from app.core.config import get_settings

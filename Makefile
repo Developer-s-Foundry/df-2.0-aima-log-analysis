@@ -224,7 +224,7 @@ lint:
 
 lint-fix:
 	@echo "fixing linting errors"
-	ruff check . --fix
+	ruff check . --fix --unsafe-fixes
 
 lint-format:
 	@echo "formatting code block"

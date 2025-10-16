@@ -2,15 +2,13 @@
 
 import time
 from typing import Callable
+
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.logging import get_logger
-from app.core.security_enhanced import (
-    get_rate_limiter,
-    InputSanitizer
-)
+from app.core.security_enhanced import InputSanitizer, get_rate_limiter
 
 logger = get_logger(__name__)
 

@@ -3,7 +3,7 @@
 import hashlib
 import json
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import aio_pika
 from tenacity import retry, stop_after_attempt, wait_exponential

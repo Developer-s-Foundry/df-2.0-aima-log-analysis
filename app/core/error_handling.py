@@ -1,18 +1,18 @@
 """Advanced error handling with circuit breaker, retries, and dead letter queue."""
 
+import traceback
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Any, Optional, Dict
 from functools import wraps
-import traceback
+from typing import Any, Callable, Dict, Optional
 
 from tenacity import (
+    after_log,
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
-    after_log
 )
 
 from app.core.config import get_settings
@@ -45,7 +45,7 @@ class CircuitBreaker:
     ):
         """
         Initialize circuit breaker.
-        
+
         Args:
             name: Circuit breaker name
             failure_threshold: Failures before opening circuit
@@ -56,24 +56,24 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.success_threshold = success_threshold
         self.timeout = timeout
-        
+
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
         self.last_failure_time: Optional[datetime] = None
-        
+
     async def call(self, func: Callable, *args, **kwargs) -> Any:
         """
         Execute function with circuit breaker protection.
-        
+
         Args:
             func: Async function to execute
             *args: Function arguments
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Function result
-            
+
         Raises:
             CircuitBreakerError: If circuit is open
         """
@@ -90,7 +90,7 @@ class CircuitBreaker:
                 raise CircuitBreakerError(
                     f"Circuit breaker {self.name} is OPEN"
                 )
-        
+
         try:
             result = await func(*args, **kwargs)
             self._on_success()
@@ -138,7 +138,7 @@ class CircuitBreaker:
             name=self.name,
             message="Circuit recovered"
         )
-    
+
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset."""
         if not self.last_failure_time:
@@ -350,7 +350,7 @@ class ErrorHandler:
                 "invalid"
             ]
         }
-        
+
         error_str = str(error).lower()
         error_type = type(error).__name__.lower()
 
@@ -374,7 +374,7 @@ class ErrorHandler:
 
         error_str = str(error).lower()
         return any(keyword in error_str for keyword in retryable_errors)
-    
+
     @staticmethod
     async def handle_error(
         error: Exception,

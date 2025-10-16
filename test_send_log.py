@@ -14,19 +14,21 @@ Usage:
     python test_send_log.py --scenario pattern
 """
 
+import argparse
 import asyncio
 import json
-import argparse
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 import aio_pika
-from aio_pika import Message, DeliveryMode
+from aio_pika import DeliveryMode, Message
+
 from app.core.config import get_settings
 
 
 class LogSender:
     """Sends test logs to RabbitMQ for the AIMA Log Analysis System."""
-    
+
     def __init__(self, rabbitmq_url: str = None):
         if rabbitmq_url is None:
             settings = get_settings()
@@ -36,59 +38,59 @@ class LogSender:
         self.connection = None
         self.channel = None
         self.queue_name = "log_analysis_queue"
-    
+
     async def connect(self):
         """Connect to RabbitMQ."""
         print(f"🔌 Connecting to RabbitMQ: {self.rabbitmq_url}")
         self.connection = await aio_pika.connect_robust(self.rabbitmq_url)
         self.channel = await self.connection.channel()
-        
+
         # Declare the queue
         await self.channel.declare_queue(self.queue_name, durable=True)
         print(f"✅ Connected to queue: {self.queue_name}")
-    
+
     async def close(self):
         """Close RabbitMQ connection."""
         if self.connection:
             await self.connection.close()
             print("🔌 Connection closed")
-    
+
     async def send_log(self, log_data: Dict[str, Any]) -> None:
         """Send a single log to RabbitMQ."""
         message_body = {
             "data": log_data,
             "queue_name": self.queue_name,
         }
-        
+
         message = Message(
             body=json.dumps(message_body).encode(),
             delivery_mode=DeliveryMode.PERSISTENT,
             content_type="application/json",
         )
-        
+
         await self.channel.default_exchange.publish(
             message,
             routing_key=self.queue_name,
         )
-        
+
         print(f"📤 Sent: [{log_data['log_level']}] {log_data['service_name']}: {log_data['message'][:50]}...")
-    
+
     async def send_multiple_logs(self, logs: List[Dict[str, Any]], delay: float = 0.5):
         """Send multiple logs with delay between each."""
         for i, log in enumerate(logs, 1):
             await self.send_log(log)
             if i < len(logs):
                 await asyncio.sleep(delay)
-    
+
     # ========================================================================
     # TEST SCENARIOS
     # ========================================================================
-    
+
     def get_critical_error_logs(self) -> List[Dict[str, Any]]:
         """Scenario 1: Critical errors that should trigger ALERTS."""
         print("\n🚨 Scenario 1: CRITICAL ERRORS (Should trigger alerts)")
         print("=" * 60)
-        
+
         return [
             {
                 "type": "log_entry",
@@ -131,15 +133,15 @@ class LogSender:
                 })
             }
         ]
-    
+
     def get_pattern_logs(self) -> List[Dict[str, Any]]:
         """Scenario 2: Recurring patterns that should trigger RECOMMENDATIONS."""
         print("\n💡 Scenario 2: RECURRING PATTERNS (Should trigger recommendations)")
         print("=" * 60)
-        
+
         base_time = datetime.now(timezone.utc)
         logs = []
-        
+
         # Pattern 1: Slow database queries (recurring issue)
         for i in range(5):
             logs.append({
@@ -156,7 +158,7 @@ class LogSender:
                     "rows_scanned": 50000 + i * 1000
                 })
             })
-        
+
         # Pattern 2: API timeout errors (recurring issue)
         for i in range(4):
             logs.append({
@@ -172,14 +174,14 @@ class LogSender:
                     "retry_count": 3
                 })
             })
-        
+
         return logs
-    
+
     def get_anomaly_logs(self) -> List[Dict[str, Any]]:
         """Scenario 3: Anomalous behavior that should trigger ALERTS."""
         print("\n⚠️  Scenario 3: ANOMALIES (Should trigger alerts)")
         print("=" * 60)
-        
+
         return [
             {
                 "type": "log_entry",
@@ -210,12 +212,12 @@ class LogSender:
                 })
             }
         ]
-    
+
     def get_normal_logs(self) -> List[Dict[str, Any]]:
         """Scenario 4: Normal logs (just stored, no alerts/recommendations)."""
         print("\n✅ Scenario 4: NORMAL LOGS (Just stored)")
         print("=" * 60)
-        
+
         return [
             {
                 "type": "log_entry",
@@ -258,17 +260,17 @@ class LogSender:
                 })
             }
         ]
-    
+
     def get_mixed_scenario_logs(self) -> List[Dict[str, Any]]:
         """Scenario 5: Mixed logs (realistic production scenario)."""
         print("\n🎯 Scenario 5: MIXED REALISTIC SCENARIO")
         print("=" * 60)
-        
+
         logs = []
         base_time = datetime.now(timezone.utc)
-        
+
         # Simulate a production incident timeline
-        
+
         # T-0: Normal operations
         logs.append({
             "type": "log_entry",
@@ -278,7 +280,7 @@ class LogSender:
             "message": "Payment processed successfully: transaction_id=TXN-001",
             "timestamp": (base_time - timedelta(minutes=10)).isoformat(),
         })
-        
+
         # T-5: First warning signs
         logs.append({
             "type": "log_entry",
@@ -288,7 +290,7 @@ class LogSender:
             "message": "Database query slow: 1.5s response time",
             "timestamp": (base_time - timedelta(minutes=5)).isoformat(),
         })
-        
+
         # T-3: More warnings
         logs.append({
             "type": "log_entry",
@@ -298,7 +300,7 @@ class LogSender:
             "message": "Database query slow: 2.8s response time",
             "timestamp": (base_time - timedelta(minutes=3)).isoformat(),
         })
-        
+
         # T-2: Errors start
         logs.append({
             "type": "log_entry",
@@ -308,7 +310,7 @@ class LogSender:
             "message": "Payment processing failed: Database timeout after 5 seconds",
             "timestamp": (base_time - timedelta(minutes=2)).isoformat(),
         })
-        
+
         # T-1: Critical situation
         logs.append({
             "type": "log_entry",
@@ -318,7 +320,7 @@ class LogSender:
             "message": "Database connection pool exhausted - service degraded",
             "timestamp": (base_time - timedelta(minutes=1)).isoformat(),
         })
-        
+
         # T-0: Complete failure
         logs.append({
             "type": "log_entry",
@@ -328,13 +330,13 @@ class LogSender:
             "message": "Payment service unavailable - all database connections failed",
             "timestamp": base_time.isoformat(),
         })
-        
+
         return logs
-    
+
     async def run_scenario(self, scenario: str):
         """Run a specific test scenario."""
         await self.connect()
-        
+
         try:
             if scenario == "critical":
                 logs = self.get_critical_error_logs()
@@ -349,34 +351,34 @@ class LogSender:
             elif scenario == "all":
                 print("\n🎯 Running ALL scenarios")
                 print("=" * 60)
-                
+
                 await self.run_scenario("critical")
                 await asyncio.sleep(2)
-                
+
                 await self.run_scenario("pattern")
                 await asyncio.sleep(2)
-                
+
                 await self.run_scenario("anomaly")
                 await asyncio.sleep(2)
-                
+
                 await self.run_scenario("normal")
                 await asyncio.sleep(2)
-                
+
                 await self.run_scenario("mixed")
-                
+
                 print("\n" + "=" * 60)
                 print("✅ All scenarios completed!")
                 return
             else:
                 print(f"❌ Unknown scenario: {scenario}")
                 return
-            
+
             print(f"\n📊 Sending {len(logs)} logs...")
             await self.send_multiple_logs(logs, delay=0.5)
-            
+
             print(f"\n✅ Scenario '{scenario}' completed!")
             print("\n💡 Expected Results:")
-            
+
             if scenario == "critical":
                 print("  - 🚨 Should trigger ALERTS to Alert System (Team A)")
                 print("  - 📧 Check alerts_queue for critical alerts")
@@ -393,7 +395,7 @@ class LogSender:
                 print("  - 🚨 Should trigger ALERTS for critical/fatal logs")
                 print("  - 💡 Should trigger RECOMMENDATIONS for patterns")
                 print("  - 📧 Check both queues")
-            
+
         finally:
             await self.close()
 
@@ -407,19 +409,19 @@ async def main():
 Examples:
   # Run all scenarios
   python test_send_log.py --scenario all
-  
+
   # Test critical errors only
   python test_send_log.py --scenario critical
-  
+
   # Test pattern detection
   python test_send_log.py --scenario pattern
-  
+
   # Test anomaly detection
   python test_send_log.py --scenario anomaly
-  
+
   # Test normal logs
   python test_send_log.py --scenario normal
-  
+
   # Test realistic mixed scenario
   python test_send_log.py --scenario mixed
 
@@ -432,14 +434,14 @@ Available scenarios:
   - all:      Run all scenarios
         """
     )
-    
+
     parser.add_argument(
         "--scenario",
         choices=["critical", "pattern", "anomaly", "normal", "mixed", "all"],
         default="all",
         help="Test scenario to run"
     )
-    
+
     # Get default RabbitMQ URL from settings
     settings = get_settings()
     parser.add_argument(
@@ -447,20 +449,20 @@ Available scenarios:
         default=settings.rabbitmq_url,
         help="RabbitMQ connection URL"
     )
-    
+
     args = parser.parse_args()
-    
+
     print("🚀 AIMA Log Analysis System - Comprehensive Test")
     print("=" * 60)
     print(f"Scenario: {args.scenario}")
     print(f"RabbitMQ: {args.rabbitmq_url}")
     print("=" * 60)
-    
+
     sender = LogSender(args.rabbitmq_url)
-    
+
     try:
         await sender.run_scenario(args.scenario)
-        
+
         print("\n" + "=" * 60)
         print("🎉 Test completed successfully!")
         print("\n📋 Next Steps:")
@@ -471,13 +473,13 @@ Available scenarios:
         api_url = f"http://{settings.host}:{settings.port}"
         print(f"  4. View API: curl {api_url}/api/v1/logs")
         print(f"  5. Check AI status: curl -H 'Authorization: Bearer token' {api_url}/api/v1/ai/status")
-        
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
         traceback.print_exc()
         return 1
-    
+
     return 0
 
 

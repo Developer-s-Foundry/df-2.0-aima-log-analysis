@@ -17,15 +17,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_external import get_current_user
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.db.session import get_db
 from app.schemas.log_schemas import (
+    APIResponse,
     LogEntryResponse,
     LogListResponse,
-    APIResponse,
 )
 from app.services.log_service import LogService
-from app.core.config import get_settings
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -115,7 +115,7 @@ async def get_ai_status(
     """
     settings = get_settings()
     ai_enabled = getattr(settings, 'ai_analysis_enabled', True)
-    
+
     return APIResponse(
         data={
             "ai_enabled": ai_enabled,
@@ -151,9 +151,9 @@ async def toggle_ai_processing(
     When AI fails, the system automatically uses basic analysis to ensure continuous operation.
     """
     settings = get_settings()
-    
+
     settings.ai_analysis_enabled = enable_ai
-    
+
     logger.info(
         "ai_processing_toggled",
         ai_enabled=enable_ai,
@@ -162,7 +162,7 @@ async def toggle_ai_processing(
         ),
         user=current_user.get("sub", "unknown"),
     )
-    
+
     return APIResponse(
         data={
             "ai_enabled": enable_ai,
@@ -195,10 +195,10 @@ async def get_processing_stats(
     - Processing status
     """
     log_service = LogService(db)
-    
+
     # Get total logs
     _, total_logs = await log_service.get_logs(limit=1)
-    
+
     # Get logs by level (last 24 hours)
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(hours=24)

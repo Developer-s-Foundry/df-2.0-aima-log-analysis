@@ -1,7 +1,7 @@
 """Pydantic schemas for log-related data validation."""
 
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator

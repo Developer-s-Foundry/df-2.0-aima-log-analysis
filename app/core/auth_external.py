@@ -1,7 +1,8 @@
 """Simple external auth service integration."""
 
+from typing import Any, Dict, Optional
+
 import httpx
-from typing import Optional, Dict, Any
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt

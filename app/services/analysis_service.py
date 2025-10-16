@@ -1,19 +1,19 @@
 """Service for analysis result operations."""
 
-from datetime import datetime
-from typing import List, Optional, Dict, Any
-from uuid import UUID
 import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
 from app.models.analysis_result import AnalysisResult
 from app.models.log_entry import LogEntry
-from app.core.logging import get_logger
 from app.processing.ai_analyzer import AIAnalyzer
-from app.processing.anomaly_detector import AnomalyDetector
 from app.processing.analyzer import LogAnalyzer
+from app.processing.anomaly_detector import AnomalyDetector
 
 logger = get_logger(__name__)
 
@@ -118,12 +118,12 @@ class AnalysisService:
     ) -> Dict[str, Any]:
         """
         Perform comprehensive analysis using all processing modules.
-        
+
         Args:
             logs: List of log entries to analyze
             service_name: Service name for analysis
             use_ai: Whether to use AI analysis
-            
+
         Returns:
             Comprehensive analysis results
         """
@@ -139,12 +139,12 @@ class AnalysisService:
                 "anomalies": [],
                 "patterns": [],
             }
-        
+
         analysis_start = datetime.utcnow()
-        
+
         # 1. Basic log analysis
         basic_analysis = self.log_analyzer.analyze_logs(logs)
-        
+
         # 2. AI Analysis (if enabled)
         ai_insights = []
         if use_ai:
@@ -161,7 +161,7 @@ class AnalysisService:
                     })
                 except Exception as e:
                     logger.warning("ai_analysis_failed", log_id=str(log.id), error=str(e))
-        
+
         # 3. Anomaly Detection
         anomalies = []
         if len(logs) >= 10:
@@ -180,21 +180,21 @@ class AnalysisService:
                         })
             except Exception as e:
                 logger.warning("anomaly_detection_failed", error=str(e))
-        
+
         # 4. Calculate metrics
         error_count = len([log for log in logs if log.log_level in ["ERROR", "CRITICAL", "FATAL"]])
         warning_count = len([log for log in logs if log.log_level in ["WARNING", "WARN"]])
         info_count = len([log for log in logs if log.log_level == "INFO"])
         total_logs = len(logs)
         error_rate = (error_count / total_logs * 100) if total_logs > 0 else 0.0
-        
+
         # 5. Create summary
         summary = f"Comprehensive analysis of {service_name} service. "
         summary += f"Analyzed {total_logs} logs with {error_count} errors ({error_rate:.1f}% error rate). "
         summary += f"Found {len(anomalies)} anomalies and {len(ai_insights)} AI insights."
-        
+
         analysis_end = datetime.utcnow()
-        
+
         return {
             "analysis_start": analysis_start.isoformat(),
             "analysis_end": analysis_end.isoformat(),
@@ -217,11 +217,11 @@ class AnalysisService:
     ) -> Dict[str, Any]:
         """
         Perform AI analysis on a single log entry.
-        
+
         Args:
             log: Log entry to analyze
             context_logs: Optional context logs for better analysis
-            
+
         Returns:
             AI analysis results
         """
@@ -237,7 +237,7 @@ class AnalysisService:
                     for log in context_logs[:10] if log.id != log.id
                 ]  # noqa: E501
             }
-        
+
         try:
             ai_result = await self.ai_analyzer.analyze_log(log, context=context)
             return {
@@ -273,21 +273,21 @@ class AnalysisService:
     ) -> List[Dict[str, Any]]:
         """
         Detect anomalies in a list of logs.
-        
+
         Args:
             logs: List of log entries to analyze
             contamination: Expected proportion of anomalies
-            
+
         Returns:
             List of detected anomalies
         """
         if len(logs) < 10:
             return []
-        
+
         try:
             self.anomaly_detector.fit(logs)
             detected_anomalies = self.anomaly_detector.detect_anomalies(logs, contamination=contamination)
-            
+
             anomaly_details = []
             for anomaly in detected_anomalies:
                 log = next((log for log in logs if log.id == anomaly["log_id"]), None)
@@ -300,9 +300,9 @@ class AnalysisService:
                         "timestamp": log.timestamp.isoformat(),
                         "anomaly_score": anomaly["anomaly_score"],
                     })
-            
+
             return anomaly_details
-            
+
         except Exception as e:
             logger.error("anomaly_detection_failed", error=str(e))
             return []
@@ -315,27 +315,27 @@ class AnalysisService:
     ) -> AnalysisResult:
         """
         Create analysis result from logs using all processing modules.
-        
+
         Args:
             logs: List of log entries to analyze
             service_name: Service name for analysis
             use_ai: Whether to use AI analysis
-            
+
         Returns:
             Created analysis result
         """
         # Perform comprehensive analysis
         analysis_data = await self.perform_comprehensive_analysis(logs, service_name, use_ai)
-        
+
         # Extract recommendations from AI insights
         recommendations = []
         for insight in analysis_data["ai_insights"]:
             recommendations.extend(insight.get("recommendations", []))
-        
+
         # Add anomaly recommendations
         if analysis_data["anomalies"]:
             recommendations.append("Investigate anomalous log entries")
-        
+
         # Create analysis result
         analysis_result = await self.create_analysis_result(
             service_name=service_name,
@@ -352,7 +352,7 @@ class AnalysisService:
             anomaly_details=analysis_data["anomalies"],
             recommendations=list(set(recommendations)),  # Remove duplicates
         )
-        
+
         logger.info(
             "comprehensive_analysis_created",
             result_id=str(analysis_result.id),
@@ -362,5 +362,5 @@ class AnalysisService:
             anomalies=len(analysis_data["anomalies"]),
             ai_insights=len(analysis_data["ai_insights"]),
         )
-        
+
         return analysis_result

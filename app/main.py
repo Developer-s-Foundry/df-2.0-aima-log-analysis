@@ -1,21 +1,21 @@
 """Main FastAPI application."""
 
 import asyncio
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import time
 
 from app.api import api_router
 from app.core.config import get_settings
-from app.core.logging import setup_logging, get_logger
-from app.db.session import init_db, close_db
-from app.messaging.connection import get_rabbitmq_connection, close_rabbitmq_connection
+from app.core.logging import get_logger, setup_logging
+from app.db.session import close_db, init_db
+from app.messaging.connection import close_rabbitmq_connection, get_rabbitmq_connection
 from app.messaging.consumer import LogConsumer
-from app.services.ingestion_service import IngestionService
 from app.monitoring.metrics import get_metrics_collector, metrics_endpoint
+from app.services.ingestion_service import IngestionService
 
 # Setup logging
 setup_logging()

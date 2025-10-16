@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

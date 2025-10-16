@@ -1,6 +1,7 @@
 """Anomaly detection using statistical methods."""
 
 from typing import List
+
 import numpy as np
 from sklearn.ensemble import IsolationForest
 

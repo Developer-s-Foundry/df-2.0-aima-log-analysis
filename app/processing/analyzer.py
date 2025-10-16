@@ -2,7 +2,7 @@
 
 import re
 from collections import Counter
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from app.core.config import get_settings
 from app.core.logging import get_logger

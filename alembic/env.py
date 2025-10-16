@@ -8,13 +8,13 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-
-# Import models for metadata
-from app.models.base import Base
 from app.core.config import get_settings
 
 # Import all models to ensure they're registered
-from app.models import LogEntry, AnalysisResult, Pattern  # noqa: F401
+from app.models import AnalysisResult, LogEntry, Pattern  # noqa: F401
+
+# Import models for metadata
+from app.models.base import Base
 
 # Alembic Config object
 config = context.config
