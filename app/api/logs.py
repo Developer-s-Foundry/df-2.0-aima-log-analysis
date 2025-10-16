@@ -10,13 +10,13 @@ Architecture:
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth_external import get_current_user, get_current_user_optional
+from app.core.auth_external import get_current_user
 from app.core.logging import get_logger
 from app.db.session import get_db
 from app.schemas.log_schemas import (
@@ -44,10 +44,10 @@ async def get_logs(
 ) -> LogListResponse:
     """
     Retrieve processed logs with filtering and pagination.
-    
+
     **Purpose**: Monitoring and debugging only.
     **Note**: Log analysis happens automatically via RabbitMQ.
-    
+
     Requires JWT authentication.
     """
     log_service = LogService(db)
@@ -82,9 +82,9 @@ async def get_log(
 ) -> LogEntryResponse:
     """
     Retrieve a specific log entry by ID.
-    
+
     **Purpose**: Debugging and detailed investigation.
-    
+
     Requires JWT authentication.
     """
     log_service = LogService(db)
@@ -105,12 +105,12 @@ async def get_ai_status(
 ) -> APIResponse:
     """
     Get current AI processing status and configuration.
-    
+
     Returns:
     - AI enabled status (if disabled, system uses basic analysis)
     - Configuration details
     - Processing mode
-    
+
     Note: When AI fails, system automatically falls back to basic analysis.
     """
     settings = get_settings()
@@ -119,7 +119,9 @@ async def get_ai_status(
     return APIResponse(
         data={
             "ai_enabled": ai_enabled,
-            "processing_mode": "AI with automatic fallback" if ai_enabled else "Basic analysis only",
+            "processing_mode": (
+                "AI with automatic fallback" if ai_enabled else "Basic analysis only"
+            ),
             "ai_timeout_seconds": getattr(settings, 'ai_timeout_seconds', 10),
             "ai_retry_attempts": getattr(settings, 'ai_retry_attempts', 2),
             "ai_confidence_threshold": getattr(settings, 'ai_confidence_threshold', 0.5),
@@ -138,13 +140,13 @@ async def toggle_ai_processing(
 ) -> APIResponse:
     """
     Toggle AI processing on/off.
-    
+
     This endpoint allows you to:
     - Enable AI processing: Uses AI analysis with automatic fallback to basic analysis if AI fails
     - Disable AI processing: Uses only basic analysis
-    
+
     Changes are applied immediately to new log processing.
-    
+
     Note: Fallback to basic analysis is ALWAYS enabled when AI is on.
     When AI fails, the system automatically uses basic analysis to ensure continuous operation.
     """
@@ -155,16 +157,23 @@ async def toggle_ai_processing(
     logger.info(
         "ai_processing_toggled",
         ai_enabled=enable_ai,
-        processing_mode="AI with automatic fallback" if enable_ai else "Basic analysis only",
+        processing_mode=(
+            "AI with automatic fallback" if enable_ai else "Basic analysis only"
+        ),
         user=current_user.get("sub", "unknown"),
     )
     
     return APIResponse(
         data={
             "ai_enabled": enable_ai,
-            "processing_mode": "AI with automatic fallback" if enable_ai else "Basic analysis only",
+            "processing_mode": (
+                "AI with automatic fallback" if enable_ai else "Basic analysis only"
+            ),
             "message": f"AI processing {'enabled' if enable_ai else 'disabled'} successfully",
-            "note": "Fallback to basic analysis is automatic when AI fails. Changes apply to new log processing.",
+            "note": (
+                "Fallback to basic analysis is automatic when AI fails. "
+                "Changes apply to new log processing."
+            ),
         },
         status_code=200,
         message=f"AI processing {'enabled' if enable_ai else 'disabled'}",
@@ -178,7 +187,7 @@ async def get_processing_stats(
 ) -> APIResponse:
     """
     Get processing statistics and system metrics.
-    
+
     Returns:
     - Total logs processed
     - Logs by level (last 24 hours)
@@ -193,31 +202,31 @@ async def get_processing_stats(
     # Get logs by level (last 24 hours)
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(hours=24)
-    
+
     _, error_count = await log_service.get_logs(
         log_level="ERROR",
         start_date=start_date,
         end_date=end_date,
         limit=1
     )
-    
+
     _, warning_count = await log_service.get_logs(
         log_level="WARNING",
         start_date=start_date,
         end_date=end_date,
         limit=1
     )
-    
+
     _, info_count = await log_service.get_logs(
         log_level="INFO",
         start_date=start_date,
         end_date=end_date,
         limit=1
     )
-    
+
     total_24h = error_count + warning_count + info_count
     error_rate = (error_count / total_24h * 100) if total_24h > 0 else 0
-    
+
     return APIResponse(
         data={
             "total_logs": total_logs,
@@ -230,7 +239,9 @@ async def get_processing_stats(
             },
             "processing_status": {
                 "ai_enabled": getattr(get_settings(), 'ai_analysis_enabled', True),
-                "real_time_processing": getattr(get_settings(), 'enable_real_time_processing', True),
+                "real_time_processing": getattr(
+                    get_settings(), 'enable_real_time_processing', True
+                ),
             },
         },
         status_code=200,

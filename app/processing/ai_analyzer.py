@@ -4,7 +4,6 @@ import asyncio
 import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from functools import lru_cache
 import hashlib
 
 from app.core.config import get_settings
@@ -248,7 +247,7 @@ class AIAnalyzer:
         """Build a comprehensive prompt for AI analysis."""
         prompt_parts = [
             "Analyze the following log entry and provide insights:\n",
-            f"\n**Log Details:**",
+            "\n**Log Details:**",
             f"- Service: {log.service_name}",
             f"- Level: {log.log_level}",
             f"- Timestamp: {log.timestamp}",
@@ -262,7 +261,7 @@ class AIAnalyzer:
             prompt_parts.append(f"- Metadata: {log.metadata}")
         
         if context:
-            prompt_parts.append(f"\n**Context:**")
+            prompt_parts.append("\n**Context:**")
             if "recent_logs" in context:
                 prompt_parts.append(
                     f"- Recent similar logs: {len(context['recent_logs'])} occurrences"

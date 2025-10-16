@@ -3,7 +3,6 @@
 import json
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

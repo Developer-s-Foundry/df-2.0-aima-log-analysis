@@ -1,7 +1,6 @@
 """Service for pattern operations."""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

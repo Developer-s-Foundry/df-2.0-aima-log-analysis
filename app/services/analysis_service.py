@@ -169,7 +169,7 @@ class AnalysisService:
                 self.anomaly_detector.fit(logs)
                 detected_anomalies = self.anomaly_detector.detect_anomalies(logs, contamination=0.1)
                 for anomaly in detected_anomalies:
-                    log = next((l for l in logs if l.id == anomaly["log_id"]), None)
+                    log = next((log for log in logs if log.id == anomaly["log_id"]), None)
                     if log:
                         anomalies.append({
                             "log_id": str(log.id),
@@ -182,9 +182,9 @@ class AnalysisService:
                 logger.warning("anomaly_detection_failed", error=str(e))
         
         # 4. Calculate metrics
-        error_count = len([l for l in logs if l.log_level in ["ERROR", "CRITICAL", "FATAL"]])
-        warning_count = len([l for l in logs if l.log_level in ["WARNING", "WARN"]])
-        info_count = len([l for l in logs if l.log_level == "INFO"])
+        error_count = len([log for log in logs if log.log_level in ["ERROR", "CRITICAL", "FATAL"]])
+        warning_count = len([log for log in logs if log.log_level in ["WARNING", "WARN"]])
+        info_count = len([log for log in logs if log.log_level == "INFO"])
         total_logs = len(logs)
         error_rate = (error_count / total_logs * 100) if total_logs > 0 else 0.0
         
@@ -230,12 +230,12 @@ class AnalysisService:
             context = {
                 "recent_logs": [
                     {
-                        "message": l.message,
-                        "level": l.log_level,
-                        "timestamp": l.timestamp.isoformat()
+                        "message": log.message,
+                        "level": log.log_level,
+                        "timestamp": log.timestamp.isoformat()
                     }
-                    for l in context_logs[:10] if l.id != log.id
-                ]
+                    for log in context_logs[:10] if log.id != log.id
+                ]  # noqa: E501
             }
         
         try:
@@ -290,7 +290,7 @@ class AnalysisService:
             
             anomaly_details = []
             for anomaly in detected_anomalies:
-                log = next((l for l in logs if l.id == anomaly["log_id"]), None)
+                log = next((log for log in logs if log.id == anomaly["log_id"]), None)
                 if log:
                     anomaly_details.append({
                         "log_id": str(log.id),

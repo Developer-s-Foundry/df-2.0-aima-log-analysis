@@ -86,7 +86,7 @@ async def start_consumer(rabbitmq):
             try:
                 # Use IngestionService with AI capabilities and fallback
                 ingestion_service = IngestionService(session)
-                
+
                 # Process message with AI (will fallback to basic analysis if AI fails)
                 log_entry = await ingestion_service.process_message(message, use_ai=True)
 
@@ -100,23 +100,23 @@ async def start_consumer(rabbitmq):
             except Exception as e:
                 logger.error("message_handler_error", error=str(e), exc_info=True)
                 metrics.record_log_failed()
-                
+
                 # Try fallback processing without AI
                 try:
                     logger.info("attempting_fallback_processing")
                     ingestion_service = IngestionService(session)
                     log_entry = await ingestion_service.process_message(message, use_ai=False)
-                    
+
                     logger.info(
                         "fallback_processing_successful",
                         log_id=str(log_entry.id),
                         service=log_entry.service_name,
                     )
-                    
+
                 except Exception as fallback_error:
                     logger.error(
-                        "fallback_processing_failed", 
-                        error=str(fallback_error), 
+                        "fallback_processing_failed",
+                        error=str(fallback_error),
                         exc_info=True
                     )
 

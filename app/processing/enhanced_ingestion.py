@@ -5,7 +5,7 @@ This module extends the existing ingestion engine to incorporate AI analysis.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger

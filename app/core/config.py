@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     api_gateway_public_key: Optional[str] = Field(
         default=None, description="API Gateway public key for JWT verification"
     )
-    
+
     # External Auth Service Configuration
     auth_service_url: Optional[str] = Field(
         default=None, description="External auth service URL for token validation"
@@ -103,7 +103,9 @@ class Settings(BaseSettings):
 
     # AI Configuration
     ai_analysis_enabled: bool = Field(
-        default=True, description="Enable AI-powered log analysis (if disabled, uses basic analysis)"
+        default=True, description=(
+            "Enable AI-powered log analysis (if disabled, uses basic analysis)"
+        )
     )
     ai_timeout_seconds: int = Field(
         default=10, ge=1, description="AI analysis timeout in seconds"

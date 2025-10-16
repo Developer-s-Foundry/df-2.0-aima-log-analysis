@@ -217,3 +217,15 @@ check-patterns:
 check-queues:
 	@echo "📬 RabbitMQ queues:"
 	docker compose exec rabbitmq rabbitmqctl list_queues name messages
+
+lint:
+	@echo "detecting linting errors"
+	ruff check .
+
+lint-fix:
+	@echo "fixing linting errors"
+	ruff check . --fix
+
+lint-format:
+	@echo "formatting code block"
+	ruff format .
