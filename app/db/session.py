@@ -105,8 +105,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def close_db() -> None:
     """Close database connections and dispose of engine."""
-    global engine
-
     if engine is not None:
         await engine.dispose()
         logger.info("database_connections_closed")

@@ -225,7 +225,10 @@ class PatternService:
             pattern_types[pattern.pattern_type] = pattern_types.get(pattern.pattern_type, 0) + 1
 
             # Severity distribution
-            severity_range = f"{int(pattern.severity_score * 10) * 10}-{int(pattern.severity_score * 10) * 10 + 10}"
+            severity_range = (
+                f"{int(pattern.severity_score * 10) * 10}-"
+                f"{int(pattern.severity_score * 10) * 10 + 10}"
+            )
             severity_distribution[severity_range] = (
                 severity_distribution.get(severity_range, 0) + 1
             )

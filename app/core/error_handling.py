@@ -258,7 +258,7 @@ class DeadLetterQueue:
 
         # Prevent unlimited growth
         if len(self.failed_messages) > self.max_size:
-            self.failed_messages = self.failed_messages[-self.max_size :]
+            self.failed_messages = self.failed_messages[-self.max_size:]
 
         logger.error(
             "message_added_to_dlq",

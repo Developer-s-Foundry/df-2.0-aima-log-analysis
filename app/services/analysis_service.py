@@ -197,7 +197,7 @@ class AnalysisService:
         # 5. Create summary
         summary = f"Comprehensive analysis of {service_name} service. "
         summary += f"""
-        Analyzed {total_logs} logs with {error_count} errors ({error_rate:.1f}% error rate). 
+        Analyzed {total_logs} logs with {error_count} errors ({error_rate:.1f}% error rate).
         """
         summary += f"Found {len(anomalies)} anomalies and {len(ai_insights)} AI insights."
 

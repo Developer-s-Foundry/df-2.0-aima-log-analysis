@@ -269,7 +269,8 @@ class AIAnalyzer:
                 "3. `severity`: Severity level (LOW/MEDIUM/HIGH/CRITICAL)",
                 "4. `impact`: Impact on system/users (LOW/MEDIUM/HIGH)",
                 "5. `recommendations`: Array of 3 specific actionable recommendations",
-                "6. `estimated_resolution_time`: Estimated time to resolve (e.g., '15 minutes', '2 hours')",
+                "6. `estimated_resolution_time`: Estimated time to resolve "
+                "(e.g., '15 minutes', '2 hours')",
                 "7. `confidence`: Your confidence in this analysis (0.0 to 1.0)",
                 "\nRespond with valid JSON only.",
             ]
