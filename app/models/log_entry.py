@@ -27,9 +27,7 @@ class LogEntry(BaseModel):
         String(50), nullable=False, index=True, comment="Log level (INFO, WARN, ERROR)"
     )
 
-    message: Mapped[str] = mapped_column(
-        Text, nullable=False, comment="Log message content"
-    )
+    message: Mapped[str] = mapped_column(Text, nullable=False, comment="Log message content")
 
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True, comment="Log creation time"

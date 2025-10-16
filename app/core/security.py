@@ -40,9 +40,7 @@ class SecurityManager:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                minutes=self.settings.jwt_expiration_minutes
-            )
+            expire = datetime.utcnow() + timedelta(minutes=self.settings.jwt_expiration_minutes)
 
         to_encode.update({"exp": expire, "iat": datetime.utcnow()})
 

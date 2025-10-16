@@ -73,7 +73,9 @@ class LogSender:
             routing_key=self.queue_name,
         )
 
-        print(f"📤 Sent: [{log_data['log_level']}] {log_data['service_name']}: {log_data['message'][:50]}...")
+        print(
+            f"📤 Sent: [{log_data['log_level']}] {log_data['service_name']}: {log_data['message'][:50]}..."
+        )
 
     async def send_multiple_logs(self, logs: List[Dict[str, Any]], delay: float = 0.5):
         """Send multiple logs with delay between each."""
@@ -99,12 +101,14 @@ class LogSender:
                 "log_level": "CRITICAL",
                 "message": "Database connection pool exhausted - all connections in use",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "error_code": "DB_POOL_EXHAUSTED",
-                    "pool_size": 20,
-                    "active_connections": 20,
-                    "waiting_requests": 45
-                })
+                "raw_data": json.dumps(
+                    {
+                        "error_code": "DB_POOL_EXHAUSTED",
+                        "pool_size": 20,
+                        "active_connections": 20,
+                        "waiting_requests": 45,
+                    }
+                ),
             },
             {
                 "type": "log_entry",
@@ -113,11 +117,13 @@ class LogSender:
                 "log_level": "FATAL",
                 "message": "Redis connection failed - authentication service unavailable",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "error_code": "REDIS_CONNECTION_FAILED",
-                    "retry_attempts": 3,
-                    "last_error": "Connection refused"
-                })
+                "raw_data": json.dumps(
+                    {
+                        "error_code": "REDIS_CONNECTION_FAILED",
+                        "retry_attempts": 3,
+                        "last_error": "Connection refused",
+                    }
+                ),
             },
             {
                 "type": "log_entry",
@@ -126,12 +132,10 @@ class LogSender:
                 "log_level": "CRITICAL",
                 "message": "Memory usage critical: 95% - potential memory leak detected",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "memory_usage_percent": 95,
-                    "heap_size_mb": 1900,
-                    "max_heap_mb": 2000
-                })
-            }
+                "raw_data": json.dumps(
+                    {"memory_usage_percent": 95, "heap_size_mb": 1900, "max_heap_mb": 2000}
+                ),
+            },
         ]
 
     def get_pattern_logs(self) -> List[Dict[str, Any]]:
@@ -144,36 +148,44 @@ class LogSender:
 
         # Pattern 1: Slow database queries (recurring issue)
         for i in range(5):
-            logs.append({
-                "type": "log_entry",
-                "receiver": "log_analysis_service",
-                "service_name": "product-service",
-                "log_level": "WARNING",
-                "message": f"Slow query detected: SELECT * FROM products WHERE category_id = {100 + i} (execution time: {2.5 + i * 0.3}s)",
-                "timestamp": (base_time - timedelta(minutes=i * 2)).isoformat(),
-                "raw_data": json.dumps({
-                    "query_type": "SELECT",
-                    "execution_time_ms": int((2500 + i * 300)),
-                    "table": "products",
-                    "rows_scanned": 50000 + i * 1000
-                })
-            })
+            logs.append(
+                {
+                    "type": "log_entry",
+                    "receiver": "log_analysis_service",
+                    "service_name": "product-service",
+                    "log_level": "WARNING",
+                    "message": f"Slow query detected: SELECT * FROM products WHERE category_id = {100 + i} (execution time: {2.5 + i * 0.3}s)",
+                    "timestamp": (base_time - timedelta(minutes=i * 2)).isoformat(),
+                    "raw_data": json.dumps(
+                        {
+                            "query_type": "SELECT",
+                            "execution_time_ms": int((2500 + i * 300)),
+                            "table": "products",
+                            "rows_scanned": 50000 + i * 1000,
+                        }
+                    ),
+                }
+            )
 
         # Pattern 2: API timeout errors (recurring issue)
         for i in range(4):
-            logs.append({
-                "type": "log_entry",
-                "receiver": "log_analysis_service",
-                "service_name": "notification-service",
-                "log_level": "ERROR",
-                "message": f"External API timeout: Failed to send notification to user {1000 + i} after 30 seconds",
-                "timestamp": (base_time - timedelta(minutes=i * 3)).isoformat(),
-                "raw_data": json.dumps({
-                    "api_endpoint": "https://api.sms-provider.com/send",
-                    "timeout_seconds": 30,
-                    "retry_count": 3
-                })
-            })
+            logs.append(
+                {
+                    "type": "log_entry",
+                    "receiver": "log_analysis_service",
+                    "service_name": "notification-service",
+                    "log_level": "ERROR",
+                    "message": f"External API timeout: Failed to send notification to user {1000 + i} after 30 seconds",
+                    "timestamp": (base_time - timedelta(minutes=i * 3)).isoformat(),
+                    "raw_data": json.dumps(
+                        {
+                            "api_endpoint": "https://api.sms-provider.com/send",
+                            "timeout_seconds": 30,
+                            "retry_count": 3,
+                        }
+                    ),
+                }
+            )
 
         return logs
 
@@ -190,12 +202,14 @@ class LogSender:
                 "log_level": "ERROR",
                 "message": "Unusual payment failure rate: 45% of transactions failed in last 5 minutes",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "total_transactions": 200,
-                    "failed_transactions": 90,
-                    "failure_rate": 45.0,
-                    "normal_failure_rate": 2.5
-                })
+                "raw_data": json.dumps(
+                    {
+                        "total_transactions": 200,
+                        "failed_transactions": 90,
+                        "failure_rate": 45.0,
+                        "normal_failure_rate": 2.5,
+                    }
+                ),
             },
             {
                 "type": "log_entry",
@@ -204,13 +218,15 @@ class LogSender:
                 "log_level": "WARNING",
                 "message": "Spike in failed login attempts: 500 failed logins in 2 minutes from IP 192.168.1.100",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "failed_attempts": 500,
-                    "time_window_minutes": 2,
-                    "source_ip": "192.168.1.100",
-                    "normal_rate": 5
-                })
-            }
+                "raw_data": json.dumps(
+                    {
+                        "failed_attempts": 500,
+                        "time_window_minutes": 2,
+                        "source_ip": "192.168.1.100",
+                        "normal_rate": 5,
+                    }
+                ),
+            },
         ]
 
     def get_normal_logs(self) -> List[Dict[str, Any]]:
@@ -226,12 +242,14 @@ class LogSender:
                 "log_level": "INFO",
                 "message": "Request processed successfully: GET /api/products - 200 OK (45ms)",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "method": "GET",
-                    "path": "/api/products",
-                    "status_code": 200,
-                    "response_time_ms": 45
-                })
+                "raw_data": json.dumps(
+                    {
+                        "method": "GET",
+                        "path": "/api/products",
+                        "status_code": 200,
+                        "response_time_ms": 45,
+                    }
+                ),
             },
             {
                 "type": "log_entry",
@@ -240,11 +258,9 @@ class LogSender:
                 "log_level": "INFO",
                 "message": "Order created successfully: order_id=ORD-12345, total=$99.99",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "order_id": "ORD-12345",
-                    "total_amount": 99.99,
-                    "items_count": 3
-                })
+                "raw_data": json.dumps(
+                    {"order_id": "ORD-12345", "total_amount": 99.99, "items_count": 3}
+                ),
             },
             {
                 "type": "log_entry",
@@ -253,12 +269,10 @@ class LogSender:
                 "log_level": "DEBUG",
                 "message": "Cache hit: key=user:1234, ttl=3600s",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "raw_data": json.dumps({
-                    "cache_key": "user:1234",
-                    "ttl_seconds": 3600,
-                    "hit": True
-                })
-            }
+                "raw_data": json.dumps(
+                    {"cache_key": "user:1234", "ttl_seconds": 3600, "hit": True}
+                ),
+            },
         ]
 
     def get_mixed_scenario_logs(self) -> List[Dict[str, Any]]:
@@ -272,64 +286,76 @@ class LogSender:
         # Simulate a production incident timeline
 
         # T-0: Normal operations
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "INFO",
-            "message": "Payment processed successfully: transaction_id=TXN-001",
-            "timestamp": (base_time - timedelta(minutes=10)).isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "INFO",
+                "message": "Payment processed successfully: transaction_id=TXN-001",
+                "timestamp": (base_time - timedelta(minutes=10)).isoformat(),
+            }
+        )
 
         # T-5: First warning signs
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "WARNING",
-            "message": "Database query slow: 1.5s response time",
-            "timestamp": (base_time - timedelta(minutes=5)).isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "WARNING",
+                "message": "Database query slow: 1.5s response time",
+                "timestamp": (base_time - timedelta(minutes=5)).isoformat(),
+            }
+        )
 
         # T-3: More warnings
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "WARNING",
-            "message": "Database query slow: 2.8s response time",
-            "timestamp": (base_time - timedelta(minutes=3)).isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "WARNING",
+                "message": "Database query slow: 2.8s response time",
+                "timestamp": (base_time - timedelta(minutes=3)).isoformat(),
+            }
+        )
 
         # T-2: Errors start
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "ERROR",
-            "message": "Payment processing failed: Database timeout after 5 seconds",
-            "timestamp": (base_time - timedelta(minutes=2)).isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "ERROR",
+                "message": "Payment processing failed: Database timeout after 5 seconds",
+                "timestamp": (base_time - timedelta(minutes=2)).isoformat(),
+            }
+        )
 
         # T-1: Critical situation
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "CRITICAL",
-            "message": "Database connection pool exhausted - service degraded",
-            "timestamp": (base_time - timedelta(minutes=1)).isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "CRITICAL",
+                "message": "Database connection pool exhausted - service degraded",
+                "timestamp": (base_time - timedelta(minutes=1)).isoformat(),
+            }
+        )
 
         # T-0: Complete failure
-        logs.append({
-            "type": "log_entry",
-            "receiver": "log_analysis_service",
-            "service_name": "payment-service",
-            "log_level": "FATAL",
-            "message": "Payment service unavailable - all database connections failed",
-            "timestamp": base_time.isoformat(),
-        })
+        logs.append(
+            {
+                "type": "log_entry",
+                "receiver": "log_analysis_service",
+                "service_name": "payment-service",
+                "log_level": "FATAL",
+                "message": "Payment service unavailable - all database connections failed",
+                "timestamp": base_time.isoformat(),
+            }
+        )
 
         return logs
 
@@ -432,22 +458,20 @@ Available scenarios:
   - normal:   Normal logs (just stored)
   - mixed:    Realistic production scenario
   - all:      Run all scenarios
-        """
+        """,
     )
 
     parser.add_argument(
         "--scenario",
         choices=["critical", "pattern", "anomaly", "normal", "mixed", "all"],
         default="all",
-        help="Test scenario to run"
+        help="Test scenario to run",
     )
 
     # Get default RabbitMQ URL from settings
     settings = get_settings()
     parser.add_argument(
-        "--rabbitmq-url",
-        default=settings.rabbitmq_url,
-        help="RabbitMQ connection URL"
+        "--rabbitmq-url", default=settings.rabbitmq_url, help="RabbitMQ connection URL"
     )
 
     args = parser.parse_args()
@@ -472,11 +496,14 @@ Available scenarios:
         settings = get_settings()
         api_url = f"http://{settings.host}:{settings.port}"
         print(f"  4. View API: curl {api_url}/api/v1/logs")
-        print(f"  5. Check AI status: curl -H 'Authorization: Bearer token' {api_url}/api/v1/ai/status")
+        print(
+            f"  5. Check AI status: curl -H 'Authorization: Bearer token' {api_url}/api/v1/ai/status"
+        )
 
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

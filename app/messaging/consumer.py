@@ -32,9 +32,7 @@ class LogConsumer:
         self._is_consuming = False
         self._consumer_tag: Optional[str] = None
 
-    async def start_consuming(
-        self, message_handler: Callable[[dict], None]
-    ) -> None:
+    async def start_consuming(self, message_handler: Callable[[dict], None]) -> None:
         """
         Start consuming messages from the log analysis queue.
 
@@ -162,8 +160,8 @@ class LogConsumer:
                 "service_name",
                 "log_level",
                 "message",
-                "timestamp"
-                ]
+                "timestamp",
+            ]
 
             if not all(field in message_data for field in required_fields):
                 return False

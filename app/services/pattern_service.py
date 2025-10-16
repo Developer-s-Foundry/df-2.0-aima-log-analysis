@@ -119,10 +119,14 @@ class PatternService:
         stored_patterns = []
         for pattern_data in detected_patterns:
             pattern = await self.create_or_update_pattern(
-                pattern_id=pattern_data.get("pattern_id", f"pattern_{hash(pattern_data.get('template', ''))}"),
+                pattern_id=pattern_data.get(
+                    "pattern_id", f"pattern_{hash(pattern_data.get('template', ''))}"
+                ),
                 pattern_type=pattern_data.get("severity", "INFO"),
                 template=pattern_data.get("template", ""),
-                description=pattern_data.get("description", f"Pattern: {pattern_data.get('template', '')[:50]}..."),
+                description=pattern_data.get(
+                    "description", f"Pattern: {pattern_data.get('template', '')[:50]}..."
+                ),
                 service_name=service_name,
                 occurrence_count=pattern_data.get("occurrences", 1),
                 frequency_score=pattern_data.get("frequency_score", 0.0),
@@ -131,16 +135,18 @@ class PatternService:
                 is_anomaly=pattern_data.get("is_anomaly", False),
             )
 
-            stored_patterns.append({
-                "pattern_id": pattern.pattern_id,
-                "template": pattern.template,
-                "description": pattern.description,
-                "occurrences": pattern.occurrence_count,
-                "frequency_score": pattern.frequency_score,
-                "severity_score": pattern.severity_score,
-                "is_anomaly": pattern.is_anomaly,
-                "created_at": pattern.created_at.isoformat(),
-            })
+            stored_patterns.append(
+                {
+                    "pattern_id": pattern.pattern_id,
+                    "template": pattern.template,
+                    "description": pattern.description,
+                    "occurrences": pattern.occurrence_count,
+                    "frequency_score": pattern.frequency_score,
+                    "severity_score": pattern.severity_score,
+                    "is_anomaly": pattern.is_anomaly,
+                    "created_at": pattern.created_at.isoformat(),
+                }
+            )
 
         logger.info(
             "patterns_detected_and_stored",
@@ -174,17 +180,19 @@ class PatternService:
         for pattern in stored_patterns:
             for log in logs:
                 if pattern.template in log.message or log.message in pattern.template:
-                    matching_patterns.append({
-                        "pattern_id": pattern.pattern_id,
-                        "template": pattern.template,
-                        "description": pattern.description,
-                        "occurrences": pattern.occurrence_count,
-                        "frequency_score": pattern.frequency_score,
-                        "severity_score": pattern.severity_score,
-                        "is_anomaly": pattern.is_anomaly,
-                        "matched_log_id": str(log.id),
-                        "matched_log_message": log.message,
-                    })
+                    matching_patterns.append(
+                        {
+                            "pattern_id": pattern.pattern_id,
+                            "template": pattern.template,
+                            "description": pattern.description,
+                            "occurrences": pattern.occurrence_count,
+                            "frequency_score": pattern.frequency_score,
+                            "severity_score": pattern.severity_score,
+                            "is_anomaly": pattern.is_anomaly,
+                            "matched_log_id": str(log.id),
+                            "matched_log_message": log.message,
+                        }
+                    )
                     break
 
         return matching_patterns
@@ -218,7 +226,9 @@ class PatternService:
 
             # Severity distribution
             severity_range = f"{int(pattern.severity_score * 10) * 10}-{int(pattern.severity_score * 10) * 10 + 10}"
-            severity_distribution[severity_range] = severity_distribution.get(severity_range, 0) + 1
+            severity_distribution[severity_range] = (
+                severity_distribution.get(severity_range, 0) + 1
+            )
 
             # Count anomalies
             if pattern.is_anomaly:

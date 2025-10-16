@@ -32,9 +32,7 @@ class AIAnalyzer:
         self._cache: Dict[str, Dict[str, Any]] = {}
 
     async def analyze_log(
-        self,
-        log: LogEntry,
-        context: Optional[Dict[str, Any]] = None
+        self, log: LogEntry, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Perform comprehensive AI analysis on a log entry.
@@ -72,35 +70,34 @@ class AIAnalyzer:
                 "ai_analysis_completed",
                 log_id=str(log.id),
                 intent=analysis.get("intent"),
-                severity=analysis.get("severity")
+                severity=analysis.get("severity"),
             )
 
             return analysis
 
         except Exception as e:
-            logger.error(
-                "ai_analysis_failed",
-                error=str(e),
-                log_id=str(log.id),
-                exc_info=True
-            )
+            logger.error("ai_analysis_failed", error=str(e), log_id=str(log.id), exc_info=True)
             return self._fallback_analysis(log)
 
     async def _perform_ai_analysis(
-        self,
-        log: LogEntry,
-        context: Optional[Dict[str, Any]]
+        self, log: LogEntry, context: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Perform the actual AI analysis using configured LLM."""
         # Prepare the prompt
         prompt = self._build_analysis_prompt(log, context)
 
         # Choose the appropriate AI service
-        if hasattr(self.settings, 'enable_groq_analysis') and self.settings.enable_groq_analysis:
+        if hasattr(self.settings, "enable_groq_analysis") and self.settings.enable_groq_analysis:
             return await self._analyze_with_groq(prompt, log)
-        elif hasattr(self.settings, 'enable_openai_analysis') and self.settings.enable_openai_analysis:
+        elif (
+            hasattr(self.settings, "enable_openai_analysis")
+            and self.settings.enable_openai_analysis
+        ):
             return await self._analyze_with_openai(prompt, log)
-        elif hasattr(self.settings, 'enable_claude_analysis') and self.settings.enable_claude_analysis:
+        elif (
+            hasattr(self.settings, "enable_claude_analysis")
+            and self.settings.enable_claude_analysis
+        ):
             return await self._analyze_with_claude(prompt, log)
         else:
             return self._fallback_analysis(log)
@@ -111,23 +108,23 @@ class AIAnalyzer:
             import openai
 
             if not self._client:
-                openai.api_key = getattr(self.settings, 'openai_api_key', None)
+                openai.api_key = getattr(self.settings, "openai_api_key", None)
                 self._client = openai
 
             response = await asyncio.to_thread(
                 openai.chat.completions.create,
-                model=getattr(self.settings, 'openai_model', 'gpt-4-turbo-preview'),
+                model=getattr(self.settings, "openai_model", "gpt-4-turbo-preview"),
                 messages=[
                     {
                         "role": "system",
                         "content": "You are an expert DevOps engineer analyzing application logs. "
-                                 "Provide concise, actionable insights in JSON format."
+                        "Provide concise, actionable insights in JSON format.",
                     },
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                temperature=getattr(self.settings, 'openai_temperature', 0.3),
-                max_tokens=getattr(self.settings, 'openai_max_tokens', 1000),
-                response_format={"type": "json_object"}
+                temperature=getattr(self.settings, "openai_temperature", 0.3),
+                max_tokens=getattr(self.settings, "openai_max_tokens", 1000),
+                response_format={"type": "json_object"},
             )
 
             result = json.loads(response.choices[0].message.content)
@@ -141,7 +138,7 @@ class AIAnalyzer:
                 "estimated_resolution_time": result.get("estimated_resolution_time"),
                 "confidence": result.get("confidence", 0.5),
                 "analysis_timestamp": datetime.utcnow().isoformat(),
-                "analyzer": "openai-gpt4"
+                "analyzer": "openai-gpt4",
             }
 
         except ImportError:
@@ -157,12 +154,10 @@ class AIAnalyzer:
             from groq import Groq
 
             if not self._client:
-                self._client = Groq(
-                    api_key=getattr(self.settings, 'groq_api_key', None)
-                )
+                self._client = Groq(api_key=getattr(self.settings, "groq_api_key", None))
 
             # Groq supports Llama 3, Mixtral, and other models
-            model = getattr(self.settings, 'groq_model', 'llama-3.1-70b-versatile')
+            model = getattr(self.settings, "groq_model", "llama-3.1-70b-versatile")
 
             completion = await asyncio.to_thread(
                 self._client.chat.completions.create,
@@ -171,13 +166,13 @@ class AIAnalyzer:
                     {
                         "role": "system",
                         "content": "You are an expert DevOps engineer analyzing application logs. "
-                                 "Provide concise, actionable insights in JSON format."
+                        "Provide concise, actionable insights in JSON format.",
                     },
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                temperature=getattr(self.settings, 'groq_temperature', 0.3),
-                max_tokens=getattr(self.settings, 'groq_max_tokens', 1000),
-                response_format={"type": "json_object"}
+                temperature=getattr(self.settings, "groq_temperature", 0.3),
+                max_tokens=getattr(self.settings, "groq_max_tokens", 1000),
+                response_format={"type": "json_object"},
             )
 
             result = json.loads(completion.choices[0].message.content)
@@ -191,7 +186,7 @@ class AIAnalyzer:
                 "estimated_resolution_time": result.get("estimated_resolution_time"),
                 "confidence": result.get("confidence", 0.5),
                 "analysis_timestamp": datetime.utcnow().isoformat(),
-                "analyzer": f"groq-{model}"
+                "analyzer": f"groq-{model}",
             }
 
         except ImportError:
@@ -208,14 +203,14 @@ class AIAnalyzer:
 
             if not self._client:
                 self._client = anthropic.Anthropic(
-                    api_key=getattr(self.settings, 'anthropic_api_key', None)
+                    api_key=getattr(self.settings, "anthropic_api_key", None)
                 )
 
             message = await asyncio.to_thread(
                 self._client.messages.create,
-                model=getattr(self.settings, 'claude_model', 'claude-3-5-sonnet-20241022'),
+                model=getattr(self.settings, "claude_model", "claude-3-5-sonnet-20241022"),
                 max_tokens=1000,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
 
             result = json.loads(message.content[0].text)
@@ -229,7 +224,7 @@ class AIAnalyzer:
                 "estimated_resolution_time": result.get("estimated_resolution_time"),
                 "confidence": result.get("confidence", 0.5),
                 "analysis_timestamp": datetime.utcnow().isoformat(),
-                "analyzer": "claude-3.5-sonnet"
+                "analyzer": "claude-3.5-sonnet",
             }
 
         except ImportError:
@@ -239,11 +234,7 @@ class AIAnalyzer:
             logger.error("claude_analysis_error", error=str(e), exc_info=True)
             raise
 
-    def _build_analysis_prompt(
-        self,
-        log: LogEntry,
-        context: Optional[Dict[str, Any]]
-    ) -> str:
+    def _build_analysis_prompt(self, log: LogEntry, context: Optional[Dict[str, Any]]) -> str:
         """Build a comprehensive prompt for AI analysis."""
         prompt_parts = [
             "Analyze the following log entry and provide insights:\n",
@@ -269,18 +260,20 @@ class AIAnalyzer:
             if "system_state" in context:
                 prompt_parts.append(f"- System state: {context['system_state']}")
 
-        prompt_parts.extend([
-            "\n**Required Analysis:**",
-            "Provide a JSON response with the following fields:",
-            "1. `intent`: What is this log communicating? (1-2 sentences)",
-            "2. `root_cause`: Most likely root cause (2-3 sentences)",
-            "3. `severity`: Severity level (LOW/MEDIUM/HIGH/CRITICAL)",
-            "4. `impact`: Impact on system/users (LOW/MEDIUM/HIGH)",
-            "5. `recommendations`: Array of 3 specific actionable recommendations",
-            "6. `estimated_resolution_time`: Estimated time to resolve (e.g., '15 minutes', '2 hours')",
-            "7. `confidence`: Your confidence in this analysis (0.0 to 1.0)",
-            "\nRespond with valid JSON only."
-        ])
+        prompt_parts.extend(
+            [
+                "\n**Required Analysis:**",
+                "Provide a JSON response with the following fields:",
+                "1. `intent`: What is this log communicating? (1-2 sentences)",
+                "2. `root_cause`: Most likely root cause (2-3 sentences)",
+                "3. `severity`: Severity level (LOW/MEDIUM/HIGH/CRITICAL)",
+                "4. `impact`: Impact on system/users (LOW/MEDIUM/HIGH)",
+                "5. `recommendations`: Array of 3 specific actionable recommendations",
+                "6. `estimated_resolution_time`: Estimated time to resolve (e.g., '15 minutes', '2 hours')",
+                "7. `confidence`: Your confidence in this analysis (0.0 to 1.0)",
+                "\nRespond with valid JSON only.",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -298,7 +291,7 @@ class AIAnalyzer:
             "estimated_resolution_time": None,
             "confidence": 0.3,
             "analysis_timestamp": datetime.utcnow().isoformat(),
-            "analyzer": "rule-based-fallback"
+            "analyzer": "rule-based-fallback",
         }
 
     def _detect_intent_rule_based(self, message: str, level: str) -> str:
@@ -329,7 +322,7 @@ class AIAnalyzer:
             "WARNING": "MEDIUM",
             "ERROR": "HIGH",
             "CRITICAL": "CRITICAL",
-            "FATAL": "CRITICAL"
+            "FATAL": "CRITICAL",
         }
         return impact_map.get(level, "MEDIUM")
 
@@ -339,29 +332,37 @@ class AIAnalyzer:
         message_lower = log.message.lower()
 
         if "connection" in message_lower or "timeout" in message_lower:
-            recommendations.extend([
-                "Check network connectivity",
-                "Verify service is running and accessible",
-                "Review connection pool settings"
-            ])
+            recommendations.extend(
+                [
+                    "Check network connectivity",
+                    "Verify service is running and accessible",
+                    "Review connection pool settings",
+                ]
+            )
         elif "database" in message_lower:
-            recommendations.extend([
-                "Check database connection pool",
-                "Review slow query logs",
-                "Verify database server status"
-            ])
+            recommendations.extend(
+                [
+                    "Check database connection pool",
+                    "Review slow query logs",
+                    "Verify database server status",
+                ]
+            )
         elif "memory" in message_lower or "oom" in message_lower:
-            recommendations.extend([
-                "Increase memory allocation",
-                "Check for memory leaks",
-                "Review memory usage patterns"
-            ])
+            recommendations.extend(
+                [
+                    "Increase memory allocation",
+                    "Check for memory leaks",
+                    "Review memory usage patterns",
+                ]
+            )
         else:
-            recommendations.extend([
-                "Review service logs for patterns",
-                "Check recent deployments",
-                "Verify system resources"
-            ])
+            recommendations.extend(
+                [
+                    "Review service logs for patterns",
+                    "Check recent deployments",
+                    "Verify system resources",
+                ]
+            )
 
         return recommendations[:3]
 
@@ -378,43 +379,35 @@ class AIAnalyzer:
 
         # Remove UUIDs
         message = re.sub(
-            r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-            '{UUID}',
-            message
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "{UUID}", message
         )
         # Remove numbers
-        message = re.sub(r'\b\d+\b', '{NUM}', message)
+        message = re.sub(r"\b\d+\b", "{NUM}", message)
         # Remove timestamps
-        message = re.sub(
-            r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}',
-            '{TIMESTAMP}',
-            message
-        )
+        message = re.sub(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}", "{TIMESTAMP}", message)
         return message
 
     def _is_ai_enabled(self) -> bool:
         """Check if AI analysis is enabled in configuration."""
-        return getattr(self.settings, 'ai_analysis_enabled', False) or \
-               getattr(self.settings, 'enable_groq_analysis', False) or \
-               getattr(self.settings, 'enable_openai_analysis', False) or \
-               getattr(self.settings, 'enable_claude_analysis', False)
+        return (
+            getattr(self.settings, "ai_analysis_enabled", False)
+            or getattr(self.settings, "enable_groq_analysis", False)
+            or getattr(self.settings, "enable_openai_analysis", False)
+            or getattr(self.settings, "enable_claude_analysis", False)
+        )
 
     def _should_analyze(self, log: LogEntry) -> bool:
         """Determine if this log should be analyzed with AI."""
-        min_severity = getattr(
-            self.settings,
-            'ai_analysis_min_severity',
-            'ERROR'
-        )
+        min_severity = getattr(self.settings, "ai_analysis_min_severity", "ERROR")
 
         severity_levels = {
-            'DEBUG': 0,
-            'INFO': 1,
-            'WARN': 2,
-            'WARNING': 2,
-            'ERROR': 3,
-            'CRITICAL': 4,
-            'FATAL': 5
+            "DEBUG": 0,
+            "INFO": 1,
+            "WARN": 2,
+            "WARNING": 2,
+            "ERROR": 3,
+            "CRITICAL": 4,
+            "FATAL": 5,
         }
 
         log_severity = severity_levels.get(log.log_level, 0)
@@ -423,9 +416,7 @@ class AIAnalyzer:
         return log_severity >= min_severity_level
 
     async def analyze_batch(
-        self,
-        logs: List[LogEntry],
-        max_concurrent: int = 5
+        self, logs: List[LogEntry], max_concurrent: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Analyze multiple logs concurrently.
@@ -462,4 +453,3 @@ def get_ai_analyzer() -> AIAnalyzer:
     if _ai_analyzer is None:
         _ai_analyzer = AIAnalyzer()
     return _ai_analyzer
-

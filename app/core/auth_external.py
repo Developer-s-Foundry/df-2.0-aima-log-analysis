@@ -34,7 +34,7 @@ async def validate_token_with_external_service(token: str) -> Optional[Dict[str,
             response = await client.post(
                 f"{settings.auth_service_url}/validate-token",
                 json={"token": token},
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
 
             if response.status_code == 200:
@@ -164,11 +164,7 @@ def create_test_token(user_id: str = "test-user", roles: list = None) -> str:
         "exp": datetime.utcnow() + timedelta(minutes=settings.jwt_expiration_minutes),
     }
 
-    token = jwt.encode(
-        payload,
-        settings.jwt_secret_key,
-        algorithm=settings.jwt_algorithm
-    )
+    token = jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
     logger.info("test_token_created", user_id=user_id)
     return token

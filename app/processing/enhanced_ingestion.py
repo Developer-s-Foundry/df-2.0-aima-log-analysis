@@ -79,18 +79,20 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
             if log_entry.metadata is None:
                 log_entry.metadata = {}
 
-            log_entry.metadata.update({
-                "ai_analysis": {
-                    "intent": ai_result.get("intent"),
-                    "root_cause": ai_result.get("root_cause"),
-                    "severity": ai_result.get("severity"),
-                    "impact": ai_result.get("impact"),
-                    "recommendations": ai_result.get("recommendations"),
-                    "confidence": ai_result.get("confidence"),
-                    "analyzer": ai_result.get("analyzer"),
-                    "analysis_duration_seconds": analysis_duration
+            log_entry.metadata.update(
+                {
+                    "ai_analysis": {
+                        "intent": ai_result.get("intent"),
+                        "root_cause": ai_result.get("root_cause"),
+                        "severity": ai_result.get("severity"),
+                        "impact": ai_result.get("impact"),
+                        "recommendations": ai_result.get("recommendations"),
+                        "confidence": ai_result.get("confidence"),
+                        "analyzer": ai_result.get("analyzer"),
+                        "analysis_duration_seconds": analysis_duration,
+                    }
                 }
-            })
+            )
 
             # Update database with enhanced metadata
             await self.db.commit()
@@ -100,7 +102,7 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
             self.metrics.record_ai_analysis_completed(
                 service_name=log_entry.service_name,
                 analyzer=ai_result.get("analyzer", "unknown"),
-                duration=analysis_duration
+                duration=analysis_duration,
             )
 
             # If high-severity issue detected, trigger immediate alert
@@ -111,15 +113,12 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
                 "ai_enhancement_completed",
                 log_id=str(log_entry.id),
                 intent=ai_result.get("intent"),
-                confidence=ai_result.get("confidence")
+                confidence=ai_result.get("confidence"),
             )
 
         except Exception as e:
             logger.error(
-                "ai_enhancement_failed",
-                log_id=str(log_entry.id),
-                error=str(e),
-                exc_info=True
+                "ai_enhancement_failed", log_id=str(log_entry.id), error=str(e), exc_info=True
             )
             # Don't fail the entire ingestion if AI analysis fails
             self.metrics.record_ai_analysis_failed()
@@ -148,7 +147,7 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
                 .where(
                     LogEntry.service_name == log_entry.service_name,
                     LogEntry.timestamp >= time_window,
-                    LogEntry.log_level.in_(["ERROR", "CRITICAL", "WARNING"])
+                    LogEntry.log_level.in_(["ERROR", "CRITICAL", "WARNING"]),
                 )
                 .order_by(desc(LogEntry.timestamp))
                 .limit(5)
@@ -162,7 +161,7 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
                     {
                         "message": log.message,
                         "level": log.log_level,
-                        "timestamp": log.timestamp.isoformat()
+                        "timestamp": log.timestamp.isoformat(),
                     }
                     for log in recent_logs
                 ]
@@ -171,14 +170,13 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
             error_count_query = select(func.count(LogEntry.id)).where(
                 LogEntry.service_name == log_entry.service_name,
                 LogEntry.timestamp >= time_window,
-                LogEntry.log_level == "ERROR"
+                LogEntry.log_level == "ERROR",
             )
             error_count_result = await self.db.execute(error_count_query)
             error_count = error_count_result.scalar()
 
             total_count_query = select(func.count(LogEntry.id)).where(
-                LogEntry.service_name == log_entry.service_name,
-                LogEntry.timestamp >= time_window
+                LogEntry.service_name == log_entry.service_name, LogEntry.timestamp >= time_window
             )
             total_count_result = await self.db.execute(total_count_query)
             total_count = total_count_result.scalar()
@@ -207,9 +205,7 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
         return context
 
     async def _trigger_immediate_alert(
-        self,
-        log_entry: LogEntry,
-        ai_result: Dict[str, Any]
+        self, log_entry: LogEntry, ai_result: Dict[str, Any]
     ) -> None:
         """
         Trigger immediate alert for high-severity issues.
@@ -234,23 +230,18 @@ class EnhancedLogIngestionEngine(LogIngestionEngine):
                 "impact": ai_result.get("impact"),
                 "recommendations": ai_result.get("recommendations", []),
                 "timestamp": log_entry.timestamp.isoformat(),
-                "log_id": str(log_entry.id)
+                "log_id": str(log_entry.id),
             }
 
             await publisher.publish_alert(alert_message)
 
             logger.info(
-                "immediate_alert_sent",
-                log_id=str(log_entry.id),
-                service=log_entry.service_name
+                "immediate_alert_sent", log_id=str(log_entry.id), service=log_entry.service_name
             )
 
         except Exception as e:
             logger.error(
-                "immediate_alert_failed",
-                log_id=str(log_entry.id),
-                error=str(e),
-                exc_info=True
+                "immediate_alert_failed", log_id=str(log_entry.id), error=str(e), exc_info=True
             )
 
 
@@ -270,4 +261,3 @@ def create_ingestion_engine(db: AsyncSession, use_ai: bool = True) -> LogIngesti
         return EnhancedLogIngestionEngine(db)
     else:
         return LogIngestionEngine(db)
-

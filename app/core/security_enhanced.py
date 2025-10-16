@@ -45,7 +45,7 @@ class RateLimiter:
         identifier: str,
         max_requests: int = 100,
         window_seconds: int = 60,
-        block_duration: int = 300
+        block_duration: int = 300,
     ) -> tuple[bool, Dict[str, Any]]:
         """
         Check if request is within rate limit.
@@ -72,7 +72,7 @@ class RateLimiter:
                 return False, {
                     "blocked": True,
                     "retry_after": remaining,
-                    "reason": "Rate limit exceeded"
+                    "reason": "Rate limit exceeded",
                 }
             else:
                 del self.blocked_until[identifier]
@@ -80,8 +80,7 @@ class RateLimiter:
         # Get requests in current window
         window_start = current_time - window_seconds
         recent_requests = [
-            req_time for req_time in self.requests[identifier]
-            if req_time > window_start
+            req_time for req_time in self.requests[identifier] if req_time > window_start
         ]
 
         # Update request list
@@ -94,12 +93,12 @@ class RateLimiter:
                 "rate_limit_exceeded",
                 identifier=identifier,
                 requests=len(recent_requests),
-                limit=max_requests
+                limit=max_requests,
             )
             return False, {
                 "blocked": True,
                 "retry_after": block_duration,
-                "reason": f"Rate limit exceeded: {len(recent_requests)}/{max_requests}"
+                "reason": f"Rate limit exceeded: {len(recent_requests)}/{max_requests}",
             }
 
         # Add current request
@@ -110,7 +109,7 @@ class RateLimiter:
             "blocked": False,
             "remaining": remaining,
             "limit": max_requests,
-            "reset_in": int(window_seconds)
+            "reset_in": int(window_seconds),
         }
 
     async def _cleanup(self):
@@ -120,7 +119,8 @@ class RateLimiter:
         # Remove old requests
         for identifier in list(self.requests.keys()):
             self.requests[identifier] = [
-                req_time for req_time in self.requests[identifier]
+                req_time
+                for req_time in self.requests[identifier]
                 if current_time - req_time < 3600  # Keep last hour
             ]
             if not self.requests[identifier]:
@@ -156,7 +156,7 @@ class InputSanitizer:
         r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)",
         r"(--|;|\/\*|\*\/|xp_|sp_)",
         r"(\bOR\b.*=.*\bOR\b)",
-        r"(\bAND\b.*=.*\bAND\b)"
+        r"(\bAND\b.*=.*\bAND\b)",
     ]
 
     XSS_PATTERNS = [
@@ -165,21 +165,13 @@ class InputSanitizer:
         r"on\w+\s*=",
         r"<iframe",
         r"<object",
-        r"<embed"
+        r"<embed",
     ]
 
-    COMMAND_INJECTION_PATTERNS = [
-        r"[;&|`$()]",
-        r"\.\./",
-        r"~/"
-    ]
+    COMMAND_INJECTION_PATTERNS = [r"[;&|`$()]", r"\.\./", r"~/"]
 
     @staticmethod
-    def sanitize_string(
-        value: str,
-        max_length: int = 1000,
-        allow_html: bool = False
-    ) -> str:
+    def sanitize_string(value: str, max_length: int = 1000, allow_html: bool = False) -> str:
         """
         Sanitize string input.
 
@@ -204,52 +196,40 @@ class InputSanitizer:
         # Check for SQL injection
         for pattern in InputSanitizer.SQL_INJECTION_PATTERNS:
             if re.search(pattern, value, re.IGNORECASE):
-                logger.warning(
-                    "sql_injection_attempt",
-                    pattern=pattern,
-                    input=value[:100]
-                )
+                logger.warning("sql_injection_attempt", pattern=pattern, input=value[:100])
                 raise ValueError("Potential SQL injection detected")
 
         # Check for XSS
         if not allow_html:
             for pattern in InputSanitizer.XSS_PATTERNS:
                 if re.search(pattern, value, re.IGNORECASE):
-                    logger.warning(
-                        "xss_attempt",
-                        pattern=pattern,
-                        input=value[:100]
-                    )
+                    logger.warning("xss_attempt", pattern=pattern, input=value[:100])
                     raise ValueError("Potential XSS attack detected")
 
         # Check for command injection
         for pattern in InputSanitizer.COMMAND_INJECTION_PATTERNS:
             if re.search(pattern, value):
-                logger.warning(
-                    "command_injection_attempt",
-                    pattern=pattern,
-                    input=value[:100]
-                )
+                logger.warning("command_injection_attempt", pattern=pattern, input=value[:100])
                 raise ValueError("Potential command injection detected")
 
         # Basic sanitization
         sanitized = value.strip()
 
         # Remove null bytes
-        sanitized = sanitized.replace('\x00', '')
+        sanitized = sanitized.replace("\x00", "")
 
         return sanitized
 
     @staticmethod
     def validate_email(email: str) -> bool:
         """Validate email address."""
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, email))
 
     @staticmethod
     def validate_uuid(uuid_string: str) -> bool:
         """Validate UUID format."""
-        pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         return bool(re.match(pattern, uuid_string, re.IGNORECASE))
 
     @staticmethod
@@ -264,32 +244,19 @@ class InputSanitizer:
         - Passwords
         """
         # Credit cards
-        text = re.sub(
-            r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
-            '[REDACTED_CC]',
-            text
-        )
+        text = re.sub(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b", "[REDACTED_CC]", text)
 
         # Email addresses
         text = re.sub(
-            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            '[REDACTED_EMAIL]',
-            text
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "[REDACTED_EMAIL]", text
         )
 
         # API keys (common patterns)
-        text = re.sub(
-            r'\b(sk_|pk_|api_|key_)[a-zA-Z0-9]{20,}\b',
-            '[REDACTED_API_KEY]',
-            text
-        )
+        text = re.sub(r"\b(sk_|pk_|api_|key_)[a-zA-Z0-9]{20,}\b", "[REDACTED_API_KEY]", text)
 
         # Passwords in logs
         text = re.sub(
-            r'(password|passwd|pwd)["\s:=]+[^\s"]+',
-            r'\1=[REDACTED]',
-            text,
-            flags=re.IGNORECASE
+            r'(password|passwd|pwd)["\s:=]+[^\s"]+', r"\1=[REDACTED]", text, flags=re.IGNORECASE
         )
 
         return text
@@ -323,10 +290,7 @@ class APIKeyManager:
         return hashlib.sha256(api_key.encode()).hexdigest()
 
     def create_api_key(
-        self,
-        name: str,
-        expires_in_days: int = 90,
-        permissions: Optional[List[str]] = None
+        self, name: str, expires_in_days: int = 90, permissions: Optional[List[str]] = None
     ) -> tuple[str, Dict[str, Any]]:
         """
         Create new API key with metadata.
@@ -346,22 +310,16 @@ class APIKeyManager:
             "name": name,
             "hash": key_hash,
             "created_at": datetime.utcnow().isoformat(),
-            "expires_at": (
-                datetime.utcnow() + timedelta(days=expires_in_days)
-            ).isoformat(),
+            "expires_at": (datetime.utcnow() + timedelta(days=expires_in_days)).isoformat(),
             "permissions": permissions or ["read"],
             "last_used": None,
             "use_count": 0,
-            "active": True
+            "active": True,
         }
 
         self.keys[key_hash] = metadata
 
-        logger.info(
-            "api_key_created",
-            name=name,
-            expires_in_days=expires_in_days
-        )
+        logger.info("api_key_created", name=name, expires_in_days=expires_in_days)
 
         return api_key, metadata
 
@@ -389,10 +347,7 @@ class APIKeyManager:
         # Check expiration
         expires_at = datetime.fromisoformat(metadata["expires_at"])
         if datetime.utcnow() > expires_at:
-            logger.warning(
-                "api_key_expired",
-                name=metadata["name"]
-            )
+            logger.warning("api_key_expired", name=metadata["name"])
             return False, None
 
         # Update usage
@@ -407,10 +362,7 @@ class APIKeyManager:
 
         if key_hash in self.keys:
             self.keys[key_hash]["active"] = False
-            logger.info(
-                "api_key_revoked",
-                name=self.keys[key_hash]["name"]
-            )
+            logger.info("api_key_revoked", name=self.keys[key_hash]["name"])
             return True
 
         return False
@@ -434,18 +386,13 @@ class APIKeyManager:
 
         # Create new key
         new_api_key, new_metadata = self.create_api_key(
-            name=old_metadata["name"],
-            expires_in_days=90,
-            permissions=old_metadata["permissions"]
+            name=old_metadata["name"], expires_in_days=90, permissions=old_metadata["permissions"]
         )
 
         # Revoke old key
         self.revoke_api_key(old_api_key)
 
-        logger.info(
-            "api_key_rotated",
-            name=old_metadata["name"]
-        )
+        logger.info("api_key_rotated", name=old_metadata["name"])
 
         return new_api_key
 
@@ -476,48 +423,42 @@ class SecureJWTManager:
             "secret",
             "your-super-secret-jwt-key-change-this-in-production",
             "changeme",
-            "password"
+            "password",
         ]
 
         if any(weak in secret.lower() for weak in weak_secrets):
             logger.critical(
                 "insecure_jwt_secret",
                 message="JWT secret is insecure! Generate a new one with: "
-                        "python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+                "python -c 'import secrets; print(secrets.token_urlsafe(32))'",
             )
 
         if len(secret) < 32:
             logger.warning(
                 "short_jwt_secret",
                 length=len(secret),
-                message="JWT secret is too short (< 32 chars)"
+                message="JWT secret is too short (< 32 chars)",
             )
 
-    def create_access_token(
-        self,
-        data: dict,
-        expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """Create JWT access token."""
         to_encode = data.copy()
 
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                minutes=self.settings.jwt_expiration_minutes
-            )
+            expire = datetime.utcnow() + timedelta(minutes=self.settings.jwt_expiration_minutes)
 
-        to_encode.update({
-            "exp": expire,
-            "iat": datetime.utcnow(),
-            "jti": secrets.token_urlsafe(16)  # JWT ID for tracking
-        })
+        to_encode.update(
+            {
+                "exp": expire,
+                "iat": datetime.utcnow(),
+                "jti": secrets.token_urlsafe(16),  # JWT ID for tracking
+            }
+        )
 
         encoded_jwt = jwt.encode(
-            to_encode,
-            self.settings.jwt_secret_key,
-            algorithm=self.settings.jwt_algorithm
+            to_encode, self.settings.jwt_secret_key, algorithm=self.settings.jwt_algorithm
         )
 
         return encoded_jwt
@@ -534,16 +475,11 @@ class SecureJWTManager:
         """
         try:
             payload = jwt.decode(
-                token,
-                self.settings.jwt_secret_key,
-                algorithms=[self.settings.jwt_algorithm]
+                token, self.settings.jwt_secret_key, algorithms=[self.settings.jwt_algorithm]
             )
             return payload
         except JWTError as e:
-            logger.warning(
-                "jwt_verification_failed",
-                error=str(e)
-            )
+            logger.warning("jwt_verification_failed", error=str(e))
             return None
 
 
@@ -568,18 +504,14 @@ async def verify_api_key(request: Request) -> Dict[str, Any]:
     api_key = request.headers.get("X-API-Key")
 
     if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
 
     manager = get_api_key_manager()
     valid, metadata = manager.validate_api_key(api_key)
 
     if not valid:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired API key"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired API key"
         )
 
     return metadata
@@ -601,18 +533,18 @@ async def check_rate_limit_dependency(request: Request):
     allowed, info = await rate_limiter.check_rate_limit(
         identifier=identifier,
         max_requests=(
-            settings.rate_limit_requests if hasattr(settings, 'rate_limit_requests') else 100
+            settings.rate_limit_requests if hasattr(settings, "rate_limit_requests") else 100
         ),
         window_seconds=(
-            settings.rate_limit_period if hasattr(settings, 'rate_limit_period') else 60
-        )
+            settings.rate_limit_period if hasattr(settings, "rate_limit_period") else 60
+        ),
     )
 
     if not allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=info["reason"],
-            headers={"Retry-After": str(info["retry_after"])}
+            headers={"Retry-After": str(info["retry_after"])},
         )
 
     # Add rate limit info to headers (optional)
@@ -622,4 +554,3 @@ async def check_rate_limit_dependency(request: Request):
 def generate_secure_secret(length: int = 32) -> str:
     """Generate a cryptographically secure secret."""
     return secrets.token_urlsafe(length)
-

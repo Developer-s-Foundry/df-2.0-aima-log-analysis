@@ -60,12 +60,10 @@ class IngestionService:
         self.publisher = MessagePublisher(self.rabbitmq_connection)
 
         # AI configuration
-        self.ai_enabled = getattr(self.settings, 'ai_analysis_enabled', True)
+        self.ai_enabled = getattr(self.settings, "ai_analysis_enabled", True)
 
     async def process_message(
-        self,
-        message: Dict[str, Any],
-        use_ai: Optional[bool] = None
+        self, message: Dict[str, Any], use_ai: Optional[bool] = None
     ) -> LogEntry:
         """
         Process incoming log message with optional AI enhancement.
@@ -140,7 +138,7 @@ class IngestionService:
         # Parse timestamp
         if timestamp_str:
             try:
-                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
             except ValueError:
                 timestamp = datetime.utcnow()
         else:
@@ -155,7 +153,9 @@ class IngestionService:
         )
 
     async def _process_with_ai(self, log_entry: LogEntry) -> None:
-        """Process log entry with AI analysis and automatic fallback to basic analysis if AI fails."""
+        """
+        Process log entry with AI analysis and automatic fallback to basic analysis if AI fails.
+        """
         try:
             # Try AI analysis first
             ai_result = await self.ai_analyzer.analyze_log(log_entry)
@@ -241,7 +241,9 @@ class IngestionService:
                 pattern_id=pattern_id,
                 pattern_type=log_entry.log_level,
                 template=ai_result.get("pattern_template", log_entry.message),
-                description=ai_result.get("pattern_description", f"AI-detected pattern: {log_entry.message[:50]}..."),
+                description=ai_result.get(
+                    "pattern_description", f"AI-detected pattern: {log_entry.message[:50]}..."
+                ),
                 service_name=log_entry.service_name,
                 occurrence_count=1,
                 frequency_score=0.5,
@@ -253,7 +255,9 @@ class IngestionService:
         except Exception as e:
             logger.warning("pattern_storage_failed", log_id=str(log_entry.id), error=str(e))
 
-    async def _store_basic_patterns(self, log_entry: LogEntry, patterns: List[Dict[str, Any]]) -> None:
+    async def _store_basic_patterns(
+        self, log_entry: LogEntry, patterns: List[Dict[str, Any]]
+    ) -> None:
         """Store patterns detected by basic analysis."""
         try:
             for pattern_data in patterns:
@@ -263,7 +267,9 @@ class IngestionService:
                     pattern_id=pattern_id,
                     pattern_type=log_entry.log_level,
                     template=pattern_data.get("template", ""),
-                    description=pattern_data.get("description", f"Basic pattern: {pattern_data.get('template', '')[:50]}..."),
+                    description=pattern_data.get(
+                        "description", f"Basic pattern: {pattern_data.get('template', '')[:50]}..."
+                    ),
                     service_name=log_entry.service_name,
                     occurrence_count=pattern_data.get("occurrences", 1),
                     frequency_score=pattern_data.get("frequency_score", 0.0),
@@ -275,7 +281,9 @@ class IngestionService:
         except Exception as e:
             logger.warning("basic_pattern_storage_failed", log_id=str(log_entry.id), error=str(e))
 
-    def _calculate_error_score(self, log_level: str, ai_result: Optional[Dict[str, Any]] = None) -> float:
+    def _calculate_error_score(
+        self, log_level: str, ai_result: Optional[Dict[str, Any]] = None
+    ) -> float:
         """Calculate error score based on log level and AI analysis."""
         base_scores = {
             "CRITICAL": 1.0,
@@ -307,13 +315,14 @@ class IngestionService:
             return True
 
         # High confidence anomalies
-        if (ai_result.get("is_anomaly", False) and
-            ai_result.get("confidence", 0.0) > 0.8):
+        if ai_result.get("is_anomaly", False) and ai_result.get("confidence", 0.0) > 0.8:
             return True
 
         return False
 
-    async def _trigger_immediate_alert(self, log_entry: LogEntry, ai_result: Dict[str, Any]) -> None:
+    async def _trigger_immediate_alert(
+        self, log_entry: LogEntry, ai_result: Dict[str, Any]
+    ) -> None:
         """Trigger immediate alert for critical issues."""
         try:
             # Determine alert type and severity
@@ -367,7 +376,9 @@ class IngestionService:
         except Exception as e:
             logger.error("alert_triggering_failed", log_id=str(log_entry.id), error=str(e))
 
-    async def _publish_recommendations(self, service_name: str, patterns: List[Dict[str, Any]]) -> None:
+    async def _publish_recommendations(
+        self, service_name: str, patterns: List[Dict[str, Any]]
+    ) -> None:
         """Publish recommendations based on detected patterns."""
         try:
             if not patterns:
@@ -381,7 +392,9 @@ class IngestionService:
             if high_severity_patterns:
                 summary += f" with {len(high_severity_patterns)} high-severity issues"
 
-            error_rate = len(high_severity_patterns) / total_patterns if total_patterns > 0 else 0.0
+            error_rate = (
+                len(high_severity_patterns) / total_patterns if total_patterns > 0 else 0.0
+            )
 
             # Extract common errors from patterns
             common_errors = []
@@ -441,9 +454,7 @@ class IngestionService:
             logger.error("pattern_processing_failed", error=str(e))
 
     async def process_batch(
-        self,
-        messages: List[Dict[str, Any]],
-        use_ai: Optional[bool] = None
+        self, messages: List[Dict[str, Any]], use_ai: Optional[bool] = None
     ) -> List[LogEntry]:
         """
         Process multiple log messages in batch.

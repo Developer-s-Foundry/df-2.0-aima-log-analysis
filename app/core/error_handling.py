@@ -24,8 +24,9 @@ settings = get_settings()
 
 class CircuitState(Enum):
     """Circuit breaker states."""
+
     CLOSED = "closed"  # Normal operation
-    OPEN = "open"      # Failing, reject requests
+    OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
@@ -37,11 +38,7 @@ class CircuitBreaker:
     """
 
     def __init__(
-        self,
-        name: str,
-        failure_threshold: int = 5,
-        success_threshold: int = 2,
-        timeout: int = 60
+        self, name: str, failure_threshold: int = 5, success_threshold: int = 2, timeout: int = 60
     ):
         """
         Initialize circuit breaker.
@@ -82,14 +79,10 @@ class CircuitBreaker:
             if self._should_attempt_reset():
                 self.state = CircuitState.HALF_OPEN
                 logger.info(
-                    "circuit_breaker_half_open",
-                    name=self.name,
-                    message="Attempting to recover"
+                    "circuit_breaker_half_open", name=self.name, message="Attempting to recover"
                 )
             else:
-                raise CircuitBreakerError(
-                    f"Circuit breaker {self.name} is OPEN"
-                )
+                raise CircuitBreakerError(f"Circuit breaker {self.name} is OPEN")
 
         try:
             result = await func(*args, **kwargs)
@@ -125,7 +118,7 @@ class CircuitBreaker:
             "circuit_breaker_opened",
             name=self.name,
             failure_count=self.failure_count,
-            threshold=self.failure_threshold
+            threshold=self.failure_threshold,
         )
 
     def _close_circuit(self) -> None:
@@ -133,11 +126,7 @@ class CircuitBreaker:
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
-        logger.info(
-            "circuit_breaker_closed",
-            name=self.name,
-            message="Circuit recovered"
-        )
+        logger.info("circuit_breaker_closed", name=self.name, message="Circuit recovered")
 
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset."""
@@ -156,12 +145,13 @@ class CircuitBreaker:
             "success_count": self.success_count,
             "last_failure_time": (
                 self.last_failure_time.isoformat() if self.last_failure_time else None
-            )
+            ),
         }
 
 
 class CircuitBreakerError(Exception):
     """Raised when circuit breaker is open."""
+
     pass
 
 
@@ -170,10 +160,7 @@ _circuit_breakers: Dict[str, CircuitBreaker] = {}
 
 
 def get_circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    success_threshold: int = 2,
-    timeout: int = 60
+    name: str, failure_threshold: int = 5, success_threshold: int = 2, timeout: int = 60
 ) -> CircuitBreaker:
     """Get or create a circuit breaker."""
     if name not in _circuit_breakers:
@@ -181,16 +168,13 @@ def get_circuit_breaker(
             name=name,
             failure_threshold=failure_threshold,
             success_threshold=success_threshold,
-            timeout=timeout
+            timeout=timeout,
         )
     return _circuit_breakers[name]
 
 
 def with_circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    success_threshold: int = 2,
-    timeout: int = 60
+    name: str, failure_threshold: int = 5, success_threshold: int = 2, timeout: int = 60
 ):
     """
     Decorator to add circuit breaker to async function.
@@ -200,12 +184,13 @@ def with_circuit_breaker(
         async def query_database():
             ...
     """
+
     def decorator(func: Callable):
         circuit_breaker = get_circuit_breaker(
             name=name,
             failure_threshold=failure_threshold,
             success_threshold=success_threshold,
-            timeout=timeout
+            timeout=timeout,
         )
 
         @wraps(func)
@@ -213,14 +198,12 @@ def with_circuit_breaker(
             return await circuit_breaker.call(func, *args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def with_retry(
-    max_attempts: int = 3,
-    min_wait: int = 1,
-    max_wait: int = 10,
-    exceptions: tuple = (Exception,)
+    max_attempts: int = 3, min_wait: int = 1, max_wait: int = 10, exceptions: tuple = (Exception,)
 ):
     """
     Decorator for retry logic with exponential backoff.
@@ -235,7 +218,7 @@ def with_retry(
         wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
         retry=retry_if_exception_type(exceptions),
         before_sleep=before_sleep_log(logger, "WARNING"),
-        after=after_log(logger, "INFO")
+        after=after_log(logger, "INFO"),
     )
 
 
@@ -252,10 +235,7 @@ class DeadLetterQueue:
         self.max_size = 1000
 
     async def add(
-        self,
-        message: Any,
-        error: Exception,
-        context: Optional[Dict[str, Any]] = None
+        self, message: Any, error: Exception, context: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Add failed message to DLQ.
@@ -271,20 +251,20 @@ class DeadLetterQueue:
             "error_type": type(error).__name__,
             "traceback": traceback.format_exc(),
             "timestamp": datetime.utcnow().isoformat(),
-            "context": context or {}
+            "context": context or {},
         }
 
         self.failed_messages.append(entry)
 
         # Prevent unlimited growth
         if len(self.failed_messages) > self.max_size:
-            self.failed_messages = self.failed_messages[-self.max_size:]
+            self.failed_messages = self.failed_messages[-self.max_size :]
 
         logger.error(
             "message_added_to_dlq",
             error=str(error),
             message_type=type(message).__name__,
-            dlq_size=len(self.failed_messages)
+            dlq_size=len(self.failed_messages),
         )
 
     def get_messages(self, limit: Optional[int] = None) -> list:
@@ -321,34 +301,11 @@ class ErrorHandler:
     def categorize_error(error: Exception) -> str:
         """Categorize error for appropriate handling."""
         error_categories = {
-            "database": [
-                "asyncpg",
-                "sqlalchemy",
-                "connection",
-                "database"
-            ],
-            "network": [
-                "timeout",
-                "connection",
-                "socket",
-                "unreachable"
-            ],
-            "rabbitmq": [
-                "aio_pika",
-                "pika",
-                "amqp"
-            ],
-            "ai_service": [
-                "openai",
-                "anthropic",
-                "groq",
-                "rate_limit"
-            ],
-            "validation": [
-                "validation",
-                "pydantic",
-                "invalid"
-            ]
+            "database": ["asyncpg", "sqlalchemy", "connection", "database"],
+            "network": ["timeout", "connection", "socket", "unreachable"],
+            "rabbitmq": ["aio_pika", "pika", "amqp"],
+            "ai_service": ["openai", "anthropic", "groq", "rate_limit"],
+            "validation": ["validation", "pydantic", "invalid"],
         }
 
         error_str = str(error).lower()
@@ -363,23 +320,14 @@ class ErrorHandler:
     @staticmethod
     def is_retryable(error: Exception) -> bool:
         """Determine if error is retryable."""
-        retryable_errors = [
-            "timeout",
-            "connection",
-            "temporary",
-            "rate_limit",
-            "503",
-            "502"
-        ]
+        retryable_errors = ["timeout", "connection", "temporary", "rate_limit", "503", "502"]
 
         error_str = str(error).lower()
         return any(keyword in error_str for keyword in retryable_errors)
 
     @staticmethod
     async def handle_error(
-        error: Exception,
-        context: Dict[str, Any],
-        dlq: Optional[DeadLetterQueue] = None
+        error: Exception, context: Dict[str, Any], dlq: Optional[DeadLetterQueue] = None
     ) -> Dict[str, Any]:
         """
         Handle error with appropriate strategy.
@@ -401,31 +349,24 @@ class ErrorHandler:
             category=category,
             retryable=retryable,
             context=context,
-            exc_info=True
+            exc_info=True,
         )
 
         # Add to DLQ if not retryable
         if not retryable and dlq:
-            await dlq.add(
-                message=context.get("message"),
-                error=error,
-                context=context
-            )
+            await dlq.add(message=context.get("message"), error=error, context=context)
 
         return {
             "error": str(error),
             "error_type": type(error).__name__,
             "category": category,
             "retryable": retryable,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
 async def safe_execute(
-    func: Callable,
-    *args,
-    fallback: Optional[Callable] = None,
-    **kwargs
+    func: Callable, *args, fallback: Optional[Callable] = None, **kwargs
 ) -> tuple[bool, Any]:
     """
     Execute function safely with error handling.
@@ -443,23 +384,14 @@ async def safe_execute(
         result = await func(*args, **kwargs)
         return True, result
     except Exception as e:
-        logger.error(
-            "safe_execute_failed",
-            function=func.__name__,
-            error=str(e),
-            exc_info=True
-        )
+        logger.error("safe_execute_failed", function=func.__name__, error=str(e), exc_info=True)
 
         if fallback:
             try:
                 result = await fallback(*args, **kwargs)
                 return True, result
             except Exception as fallback_error:
-                logger.error(
-                    "fallback_failed",
-                    error=str(fallback_error),
-                    exc_info=True
-                )
+                logger.error("fallback_failed", error=str(fallback_error), exc_info=True)
 
         return False, None
 
@@ -483,23 +415,17 @@ class HealthCheck:
         for name, check_func in self.checks.items():
             try:
                 success, message = await check_func()
-                results[name] = {
-                    "healthy": success,
-                    "message": message
-                }
+                results[name] = {"healthy": success, "message": message}
                 if not success:
                     overall_healthy = False
             except Exception as e:
-                results[name] = {
-                    "healthy": False,
-                    "message": f"Check failed: {str(e)}"
-                }
+                results[name] = {"healthy": False, "message": f"Check failed: {str(e)}"}
                 overall_healthy = False
 
         return {
             "healthy": overall_healthy,
             "checks": results,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 

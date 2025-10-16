@@ -76,9 +76,7 @@ class AnalysisService:
 
         return result
 
-    async def get_latest_analysis(
-        self, service_name: str
-    ) -> Optional[AnalysisResult]:
+    async def get_latest_analysis(self, service_name: str) -> Optional[AnalysisResult]:
         """Get latest analysis result for a service."""
         query = (
             select(AnalysisResult)
@@ -148,17 +146,21 @@ class AnalysisService:
         # 2. AI Analysis (if enabled)
         ai_insights = []
         if use_ai:
-            critical_logs = [log for log in logs if log.log_level in ["ERROR", "CRITICAL", "FATAL"]]
+            critical_logs = [
+                log for log in logs if log.log_level in ["ERROR", "CRITICAL", "FATAL"]
+            ]
             for log in critical_logs[:5]:  # Analyze top 5 critical logs
                 try:
                     ai_result = await self.ai_analyzer.analyze_log(log)
-                    ai_insights.append({
-                        "log_id": str(log.id),
-                        "intent": ai_result.get("intent"),
-                        "root_cause": ai_result.get("root_cause"),
-                        "recommendations": ai_result.get("recommendations", []),
-                        "confidence": ai_result.get("confidence", 0.0),
-                    })
+                    ai_insights.append(
+                        {
+                            "log_id": str(log.id),
+                            "intent": ai_result.get("intent"),
+                            "root_cause": ai_result.get("root_cause"),
+                            "recommendations": ai_result.get("recommendations", []),
+                            "confidence": ai_result.get("confidence", 0.0),
+                        }
+                    )
                 except Exception as e:
                     logger.warning("ai_analysis_failed", log_id=str(log.id), error=str(e))
 
@@ -167,17 +169,21 @@ class AnalysisService:
         if len(logs) >= 10:
             try:
                 self.anomaly_detector.fit(logs)
-                detected_anomalies = self.anomaly_detector.detect_anomalies(logs, contamination=0.1)
+                detected_anomalies = self.anomaly_detector.detect_anomalies(
+                    logs, contamination=0.1
+                )
                 for anomaly in detected_anomalies:
                     log = next((log for log in logs if log.id == anomaly["log_id"]), None)
                     if log:
-                        anomalies.append({
-                            "log_id": str(log.id),
-                            "message": log.message,
-                            "log_level": log.log_level,
-                            "anomaly_score": anomaly["anomaly_score"],
-                            "timestamp": log.timestamp.isoformat(),
-                        })
+                        anomalies.append(
+                            {
+                                "log_id": str(log.id),
+                                "message": log.message,
+                                "log_level": log.log_level,
+                                "anomaly_score": anomaly["anomaly_score"],
+                                "timestamp": log.timestamp.isoformat(),
+                            }
+                        )
             except Exception as e:
                 logger.warning("anomaly_detection_failed", error=str(e))
 
@@ -190,7 +196,9 @@ class AnalysisService:
 
         # 5. Create summary
         summary = f"Comprehensive analysis of {service_name} service. "
-        summary += f"Analyzed {total_logs} logs with {error_count} errors ({error_rate:.1f}% error rate). "
+        summary += f"""
+        Analyzed {total_logs} logs with {error_count} errors ({error_rate:.1f}% error rate). 
+        """
         summary += f"Found {len(anomalies)} anomalies and {len(ai_insights)} AI insights."
 
         analysis_end = datetime.utcnow()
@@ -232,9 +240,10 @@ class AnalysisService:
                     {
                         "message": log.message,
                         "level": log.log_level,
-                        "timestamp": log.timestamp.isoformat()
+                        "timestamp": log.timestamp.isoformat(),
                     }
-                    for log in context_logs[:10] if log.id != log.id
+                    for log in context_logs[:10]
+                    if log.id != log.id
                 ]  # noqa: E501
             }
 
@@ -286,20 +295,24 @@ class AnalysisService:
 
         try:
             self.anomaly_detector.fit(logs)
-            detected_anomalies = self.anomaly_detector.detect_anomalies(logs, contamination=contamination)
+            detected_anomalies = self.anomaly_detector.detect_anomalies(
+                logs, contamination=contamination
+            )
 
             anomaly_details = []
             for anomaly in detected_anomalies:
                 log = next((log for log in logs if log.id == anomaly["log_id"]), None)
                 if log:
-                    anomaly_details.append({
-                        "log_id": str(log.id),
-                        "message": log.message,
-                        "log_level": log.log_level,
-                        "service_name": log.service_name,
-                        "timestamp": log.timestamp.isoformat(),
-                        "anomaly_score": anomaly["anomaly_score"],
-                    })
+                    anomaly_details.append(
+                        {
+                            "log_id": str(log.id),
+                            "message": log.message,
+                            "log_level": log.log_level,
+                            "service_name": log.service_name,
+                            "timestamp": log.timestamp.isoformat(),
+                            "anomaly_score": anomaly["anomaly_score"],
+                        }
+                    )
 
             return anomaly_details
 

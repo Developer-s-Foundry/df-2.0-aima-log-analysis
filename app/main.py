@@ -115,9 +115,7 @@ async def start_consumer(rabbitmq):
 
                 except Exception as fallback_error:
                     logger.error(
-                        "fallback_processing_failed",
-                        error=str(fallback_error),
-                        exc_info=True
+                        "fallback_processing_failed", error=str(fallback_error), exc_info=True
                     )
 
     await consumer.start_consuming(message_handler)

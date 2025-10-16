@@ -91,10 +91,7 @@ async def get_log(
     log = await log_service.get_log_by_id(log_id)
 
     if not log:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Log entry not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log entry not found")
 
     return LogEntryResponse.model_validate(log)
 
@@ -114,7 +111,7 @@ async def get_ai_status(
     Note: When AI fails, system automatically falls back to basic analysis.
     """
     settings = get_settings()
-    ai_enabled = getattr(settings, 'ai_analysis_enabled', True)
+    ai_enabled = getattr(settings, "ai_analysis_enabled", True)
 
     return APIResponse(
         data={
@@ -122,10 +119,10 @@ async def get_ai_status(
             "processing_mode": (
                 "AI with automatic fallback" if ai_enabled else "Basic analysis only"
             ),
-            "ai_timeout_seconds": getattr(settings, 'ai_timeout_seconds', 10),
-            "ai_retry_attempts": getattr(settings, 'ai_retry_attempts', 2),
-            "ai_confidence_threshold": getattr(settings, 'ai_confidence_threshold', 0.5),
-            "real_time_processing": getattr(settings, 'enable_real_time_processing', True),
+            "ai_timeout_seconds": getattr(settings, "ai_timeout_seconds", 10),
+            "ai_retry_attempts": getattr(settings, "ai_retry_attempts", 2),
+            "ai_confidence_threshold": getattr(settings, "ai_confidence_threshold", 0.5),
+            "real_time_processing": getattr(settings, "enable_real_time_processing", True),
             "note": "When AI fails, system automatically uses basic analysis as fallback",
         },
         status_code=200,
@@ -157,9 +154,7 @@ async def toggle_ai_processing(
     logger.info(
         "ai_processing_toggled",
         ai_enabled=enable_ai,
-        processing_mode=(
-            "AI with automatic fallback" if enable_ai else "Basic analysis only"
-        ),
+        processing_mode=("AI with automatic fallback" if enable_ai else "Basic analysis only"),
         user=current_user.get("sub", "unknown"),
     )
 
@@ -204,24 +199,15 @@ async def get_processing_stats(
     start_date = end_date - timedelta(hours=24)
 
     _, error_count = await log_service.get_logs(
-        log_level="ERROR",
-        start_date=start_date,
-        end_date=end_date,
-        limit=1
+        log_level="ERROR", start_date=start_date, end_date=end_date, limit=1
     )
 
     _, warning_count = await log_service.get_logs(
-        log_level="WARNING",
-        start_date=start_date,
-        end_date=end_date,
-        limit=1
+        log_level="WARNING", start_date=start_date, end_date=end_date, limit=1
     )
 
     _, info_count = await log_service.get_logs(
-        log_level="INFO",
-        start_date=start_date,
-        end_date=end_date,
-        limit=1
+        log_level="INFO", start_date=start_date, end_date=end_date, limit=1
     )
 
     total_24h = error_count + warning_count + info_count
@@ -238,9 +224,9 @@ async def get_processing_stats(
                 "error_rate": round(error_rate, 2),
             },
             "processing_status": {
-                "ai_enabled": getattr(get_settings(), 'ai_analysis_enabled', True),
+                "ai_enabled": getattr(get_settings(), "ai_analysis_enabled", True),
                 "real_time_processing": getattr(
-                    get_settings(), 'enable_real_time_processing', True
+                    get_settings(), "enable_real_time_processing", True
                 ),
             },
         },

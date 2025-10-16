@@ -73,7 +73,5 @@ def mock_jwt_token() -> str:
     from app.core.security import SecurityManager
 
     security_manager = SecurityManager()
-    token = security_manager.create_access_token(
-        data={"sub": "test_user", "role": "admin"}
-    )
+    token = security_manager.create_access_token(data={"sub": "test_user", "role": "admin"})
     return token

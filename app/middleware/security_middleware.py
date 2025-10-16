@@ -45,9 +45,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                         content={
                             "status_code": 429,
                             "message": "Rate limit exceeded",
-                            "retry_after": info.get("retry_after", 60)
+                            "retry_after": info.get("retry_after", 60),
                         },
-                        headers={"Retry-After": str(info.get("retry_after", 60))}
+                        headers={"Retry-After": str(info.get("retry_after", 60))},
                     )
 
             # 2. Input validation (for query params)
@@ -56,8 +56,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     content={
                         "status_code": 400,
-                        "message": "Invalid or potentially malicious input detected"
-                    }
+                        "message": "Invalid or potentially malicious input detected",
+                    },
                 )
 
             # 3. Process request
@@ -74,24 +74,18 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
                 status_code=response.status_code,
                 duration=f"{duration:.3f}s",
-                client=request.client.host if request.client else "unknown"
+                client=request.client.host if request.client else "unknown",
             )
 
             return response
 
         except Exception as e:
             logger.error(
-                "security_middleware_error",
-                error=str(e),
-                path=request.url.path,
-                exc_info=True
+                "security_middleware_error", error=str(e), path=request.url.path, exc_info=True
             )
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={
-                    "status_code": 500,
-                    "message": "Internal server error"
-                }
+                content={"status_code": 500, "message": "Internal server error"},
             )
 
     async def _check_rate_limit(self, request: Request) -> tuple[bool, dict]:
@@ -108,9 +102,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             window = 60
 
         return await self.rate_limiter.check_rate_limit(
-            identifier=identifier,
-            max_requests=max_requests,
-            window_seconds=window
+            identifier=identifier, max_requests=max_requests, window_seconds=window
         )
 
     async def _validate_input(self, request: Request) -> bool:
@@ -133,7 +125,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 "input_validation_failed",
                 error=str(e),
                 path=request.url.path,
-                params=dict(request.query_params)
+                params=dict(request.query_params),
             )
             return False
 
@@ -164,13 +156,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
     def _is_exempt_from_rate_limit(self, request: Request) -> bool:
         """Check if request is exempt from rate limiting."""
-        exempt_paths = [
-            "/health",
-            "/health/",
-            "/docs",
-            "/redoc",
-            "/openapi.json"
-        ]
+        exempt_paths = ["/health", "/health/", "/docs", "/redoc", "/openapi.json"]
         return request.url.path in exempt_paths
 
 
@@ -188,8 +174,8 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                         content={
                             "status_code": 415,
-                            "message": "Content-Type must be application/json"
-                        }
+                            "message": "Content-Type must be application/json",
+                        },
                     )
 
         # Validate Content-Length
@@ -203,11 +189,10 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                         content={
                             "status_code": 413,
-                            "message": f"Request body too large (max {max_size} bytes)"
-                        }
+                            "message": f"Request body too large (max {max_size} bytes)",
+                        },
                     )
             except ValueError:
                 pass
 
         return await call_next(request)
-

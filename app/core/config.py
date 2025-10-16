@@ -47,9 +47,7 @@ class Settings(BaseSettings):
     rabbitmq_user: str = Field(default="guest", description="RabbitMQ username")
     rabbitmq_password: str = Field(default="guest", description="RabbitMQ password")
     rabbitmq_vhost: str = Field(default="/", description="RabbitMQ virtual host")
-    rabbitmq_prefetch_count: int = Field(
-        default=10, ge=1, description="RabbitMQ prefetch count"
-    )
+    rabbitmq_prefetch_count: int = Field(default=10, ge=1, description="RabbitMQ prefetch count")
     rabbitmq_reconnect_delay: int = Field(
         default=5, ge=1, description="RabbitMQ reconnect delay in seconds"
     )
@@ -69,9 +67,7 @@ class Settings(BaseSettings):
         description="JWT secret key",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
-    jwt_expiration_minutes: int = Field(
-        default=60, ge=1, description="JWT expiration in minutes"
-    )
+    jwt_expiration_minutes: int = Field(default=60, ge=1, description="JWT expiration in minutes")
     api_gateway_public_key: Optional[str] = Field(
         default=None, description="API Gateway public key for JWT verification"
     )
@@ -103,13 +99,10 @@ class Settings(BaseSettings):
 
     # AI Configuration
     ai_analysis_enabled: bool = Field(
-        default=True, description=(
-            "Enable AI-powered log analysis (if disabled, uses basic analysis)"
-        )
+        default=True,
+        description=("Enable AI-powered log analysis (if disabled, uses basic analysis)"),
     )
-    ai_timeout_seconds: int = Field(
-        default=10, ge=1, description="AI analysis timeout in seconds"
-    )
+    ai_timeout_seconds: int = Field(default=10, ge=1, description="AI analysis timeout in seconds")
     ai_retry_attempts: int = Field(
         default=2, ge=0, description="Number of AI analysis retry attempts"
     )
@@ -132,9 +125,7 @@ class Settings(BaseSettings):
     rate_limit_requests: int = Field(
         default=100, ge=1, description="Rate limit requests per period"
     )
-    rate_limit_period: int = Field(
-        default=60, ge=1, description="Rate limit period in seconds"
-    )
+    rate_limit_period: int = Field(default=60, ge=1, description="Rate limit period in seconds")
 
     # CORS Settings
     cors_enabled: bool = Field(default=True, description="Enable CORS")
@@ -164,9 +155,7 @@ class Settings(BaseSettings):
     enable_real_time_processing: bool = Field(
         default=True, description="Enable real-time log processing"
     )
-    enable_pattern_clustering: bool = Field(
-        default=True, description="Enable pattern clustering"
-    )
+    enable_pattern_clustering: bool = Field(default=True, description="Enable pattern clustering")
     enable_ml_anomaly_detection: bool = Field(
         default=True, description="Enable ML-based anomaly detection"
     )

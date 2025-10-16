@@ -212,9 +212,7 @@ class MessagePublisher:
             )
 
             # Declare queue and publish
-            queue = await self.connection.declare_queue(
-                self.settings.alerts_queue, durable=True
-            )
+            queue = await self.connection.declare_queue(self.settings.alerts_queue, durable=True)
 
             print("queue", queue)
 
